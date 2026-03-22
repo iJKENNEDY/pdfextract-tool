@@ -4,6 +4,20 @@ Herramienta moderna y versátil para manipulación de archivos PDF con arquitect
 
 Versión actual: **v1.2**
 
+![Python](https://img.shields.io/badge/python-3.8%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Status](https://img.shields.io/badge/status-active-success)
+
+Aplicación **GUI + CLI** para:
+- extraer páginas de PDF,
+- convertir PDF a imágenes,
+- convertir imágenes a PDF,
+- convertir imágenes entre formatos compatibles.
+
+## Captura
+
+![Captura de la app](screenshot.png)
+
 ## Descripción General
 
 PDF Extract Tool es una aplicación completa que proporciona múltiples interfaces (CLI y GUI) para:
@@ -363,6 +377,14 @@ Las contribuciones son bienvenidas. Por favor:
 3. Commit tus cambios (`git commit -m 'Agrega nueva característica'`)
 4. Push a la rama (`git push origin feature/nueva-caracteristica`)
 5. Abre un Pull Request
+
+## Roadmap
+
+- [ ] Tests automáticos con `pytest`
+- [ ] Build ejecutable de escritorio (Windows/Linux/macOS)
+- [ ] Mejorar soporte drag & drop en todos los entornos
+- [ ] Pipeline CI (lint + tests) con GitHub Actions
+- [ ] Publicación de release assets
 
 ## Licencia
 
