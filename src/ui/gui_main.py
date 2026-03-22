@@ -660,13 +660,13 @@ class PDFExtractToolApp(tk.Tk):
 
         footer = ttk.Frame(self)
         footer.grid(row=2, column=0, sticky="ew", padx=10, pady=(0, 8))
-        ttk.Label(footer, text="v1.1", foreground="gray").pack(side="left")
+        ttk.Label(footer, text="v1.2", foreground="gray").pack(side="left")
         ttk.Button(footer, text="ℹ️ Acerca de", command=self.show_about).pack(side="right")
 
     def show_about(self):
         messagebox.showinfo(
             "Acerca de",
-            "PDF Extract Tool v1.1\n\n"
+            "PDF Extract Tool v1.2\n\n"
             "- Extrae paginas de PDF\n"
             "- Convierte PDF a JPG con rango y progreso\n"
             "- Convierte imagenes a PDF (cola, drag&drop, rango, no sobrescribe)\n"

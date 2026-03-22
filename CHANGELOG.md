@@ -35,3 +35,9 @@ All notable changes to this project are documented in this file.
 - Fixed output-collision issues by introducing automatic file/folder name enumeration.
 - Fixed UX responsiveness by moving heavy tasks to background threads and updating status/progress in UI-safe callbacks.
 - Fixed older path/config assumptions by normalizing project path handling.
+
+## v1.2.0 - 2026-03-22
+
+### Changed
+- Bumped visible app version from `v1.1` to `v1.2` in GUI footer and About dialog (`src/ui/gui_main.py`).
+- Updated `README.md` to display current version as `v1.2`.

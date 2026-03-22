@@ -2,6 +2,8 @@
 
 Herramienta moderna y versátil para manipulación de archivos PDF con arquitectura de software escalable.
 
+Versión actual: **v1.2**
+
 ## Descripción General
 
 PDF Extract Tool es una aplicación completa que proporciona múltiples interfaces (CLI y GUI) para:
