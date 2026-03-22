@@ -100,6 +100,32 @@ pdfextract/
 pip install PyPDF2 PyMuPDF Pillow
 ```
 
+O usando archivo de dependencias:
+
+```bash
+pip install -r requirements.txt
+```
+
+## Docker (opcional)
+
+Construir imagen:
+
+```bash
+docker build -t pdfextract-tool .
+```
+
+Ejecutar ayuda de la CLI unificada:
+
+```bash
+docker run --rm pdfextract-tool --help
+```
+
+Ejemplo con volumen local para convertir imagenes:
+
+```bash
+docker run --rm -v "${PWD}:/app" pdfextract-tool imgconvert ./imagenes --to webp --quality 90
+```
+
 ## Uso
 
 ### GUI (Interfaz Gráfica)
