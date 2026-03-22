@@ -8,6 +8,7 @@ PDF Extract Tool es una aplicación completa que proporciona múltiples interfac
 - **Extracción de páginas**: Extrae rangos específicos o páginas individuales de PDFs
 - **Conversión a imágenes**: Convierte páginas de PDF a JPG de alta calidad
 - **Conversión de imágenes a PDF**: Une una o varias imágenes en PDF
+- **Conversión de imágenes a otros formatos**: Convierte entre JPG, PNG, WEBP, AVIF, ICO, BMP, TIFF (según compatibilidad)
 - **Procesamiento por lotes**: Procesa múltiples archivos simultáneamente
 
 ## Características Principales
@@ -29,6 +30,12 @@ PDF Extract Tool es una aplicación completa que proporciona múltiples interfac
 - Cola de conversiones múltiples
 - Drag & drop de archivos y carpetas (si el entorno lo soporta)
 - Evita reemplazos con nombres enumerados
+
+🖌️ **Imágenes a Otros Formatos**
+- Convierte imágenes sueltas o carpetas completas
+- Soporta formatos comunes: `jpg`, `png`, `webp`, `avif`, `ico`, `bmp`, `tiff`
+- Respeta compatibilidad real de Pillow y codecs instalados
+- Muestra progreso y resumen de salida
 
 🎯 **Múltiples Interfaces**
 - **GUI**: Interfaz gráfica moderna con Tkinter
@@ -52,7 +59,8 @@ pdfextract/
 │   │   ├── __init__.py
 │   │   ├── pdf_extractor.py   # Extracción de páginas
 │   │   ├── pdf_converter.py   # Conversión PDF a JPG
-│   │   └── image_to_pdf_converter.py  # Conversión imágenes a PDF
+│   │   ├── image_to_pdf_converter.py  # Conversión imágenes a PDF
+│   │   └── image_format_converter.py  # Conversión entre formatos de imagen
 │   ├── ui/              # Interfaces de usuario
 │   │   ├── __init__.py
 │   │   └── gui_main.py  # GUI principal con Tkinter
@@ -63,11 +71,13 @@ pdfextract/
 ├── output/              # Archivos generados
 │   ├── pdfs_extraidos/  # PDFs procesados
 │   ├── imagenes_jpg/    # Imágenes convertidas
-│   └── pdf_generados_desde_imagenes/  # PDFs generados desde imágenes
+│   ├── pdf_generados_desde_imagenes/  # PDFs generados desde imágenes
+│   └── imagenes_convertidas/  # Imágenes convertidas de formato
 ├── cli_extract.py       # Script CLI para extracción
 ├── cli_convert.py       # Script CLI para conversión
 ├── cli_images_to_pdf.py # Script CLI para imágenes a PDF
-├── cli.py               # CLI unificada (extract/pdf2jpg/img2pdf)
+├── cli_image_convert.py # Script CLI para imagen -> formato
+├── cli.py               # CLI unificada (extract/pdf2jpg/img2pdf/imgconvert)
 ├── gui_main.py          # Punto de entrada para GUI
 └── README.md
 ```
@@ -79,6 +89,8 @@ pdfextract/
 - PyMuPDF/fitz (conversión a imagen)
 - Pillow (procesamiento de imágenes)
 - Tkinter (interfaz gráfica - incluida con Python)
+
+> Nota: para algunos formatos (ej. AVIF) se requiere que Pillow esté compilado con soporte del codec correspondiente.
 
 ## Instalación
 
@@ -100,6 +112,7 @@ python gui_main.py
 - ✂️ Extractor de páginas con vista previa de información
 - 🖼️ Conversor de PDF a JPG con control de zoom/calidad, rango y progreso
 - 🧩 Conversor de imágenes a PDF con cola y mensajes de salida
+- 🖌️ Conversor de imágenes a otros formatos compatibles
 - 📊 Status bar en tiempo real
 - 🎨 Tema moderno y colores coherentes
 
@@ -167,6 +180,24 @@ python cli.py pdf2jpg input.pdf --range "1-4" --zoom 2.0 --quality 95
 
 # Imágenes a PDF
 python cli.py img2pdf ./imagenes --name "album" --range "1-10"
+
+# Imágenes a otro formato
+python cli.py imgconvert ./imagenes --to webp --quality 90
+```
+
+### CLI - Imágenes a Formato
+
+Conversión directa de imágenes entre formatos:
+
+```bash
+# Carpeta completa a PNG
+python cli_image_convert.py ./imagenes --to png
+
+# Varios archivos a WEBP
+python cli_image_convert.py foto1.jpg foto2.png --to webp --quality 90
+
+# Crear iconos ICO
+python cli_image_convert.py ./logos --to ico
 ```
 
 **Opciones de zoom:**

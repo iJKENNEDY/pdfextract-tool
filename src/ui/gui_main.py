@@ -8,7 +8,14 @@ from tkinter import filedialog, messagebox, ttk
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.config.settings import GUI_CONFIG, IMAGE_OUTPUT_DIR, IMAGE_TO_PDF_OUTPUT_DIR, PDF_OUTPUT_DIR
+from src.config.settings import (
+    GUI_CONFIG,
+    IMAGE_CONVERT_OUTPUT_DIR,
+    IMAGE_OUTPUT_DIR,
+    IMAGE_TO_PDF_OUTPUT_DIR,
+    PDF_OUTPUT_DIR,
+)
+from src.services.image_format_converter import SOURCE_EXTENSIONS, ImageFormatConverter
 from src.services.image_to_pdf_converter import IMAGE_EXTENSIONS, ImageToPDFConverter
 from src.services.pdf_converter import PDFToImageConverter
 from src.services.pdf_extractor import PDFExtractor
@@ -65,15 +72,15 @@ class PDFExtractorTab(BaseTab):
         main = ttk.Frame(self, style="Main.TFrame")
         main.pack(fill="both", expand=True, padx=16, pady=16)
 
-        file_box = ttk.LabelFrame(main, text="PDF de entrada", padding=12)
+        file_box = ttk.LabelFrame(main, text="📄 PDF de entrada", padding=12)
         file_box.pack(fill="x", pady=8)
         self.file_label = ttk.Label(file_box, text="No seleccionado", foreground="gray")
         self.file_label.pack(anchor="w", pady=4)
         self.info_label = ttk.Label(file_box, text="", foreground="#555")
         self.info_label.pack(anchor="w", pady=2)
-        ttk.Button(file_box, text="Seleccionar PDF", command=self.select_file).pack(anchor="w", pady=6)
+        ttk.Button(file_box, text="📁 Seleccionar PDF", command=self.select_file).pack(anchor="w", pady=6)
 
-        pages_box = ttk.LabelFrame(main, text="Rango de paginas", padding=12)
+        pages_box = ttk.LabelFrame(main, text="🔢 Rango de paginas", padding=12)
         pages_box.pack(fill="x", pady=8)
         ttk.Label(pages_box, text="Ejemplo: 1-3,5,7-9").pack(anchor="w")
         self.pages_var = tk.StringVar()
@@ -81,8 +88,8 @@ class PDFExtractorTab(BaseTab):
 
         action_box = ttk.Frame(main)
         action_box.pack(fill="x", pady=8)
-        ttk.Button(action_box, text="Extraer", command=self.extract_pages).pack(side="left", padx=4)
-        ttk.Button(action_box, text="Guardar como", command=self.save_as).pack(side="left", padx=4)
+        ttk.Button(action_box, text="✂️ Extraer", command=self.extract_pages).pack(side="left", padx=4)
+        ttk.Button(action_box, text="💾 Guardar como", command=self.save_as).pack(side="left", padx=4)
 
         self.build_status_bar()
 
@@ -150,15 +157,15 @@ class PDFToImageTab(BaseTab):
         main = ttk.Frame(self, style="Main.TFrame")
         main.pack(fill="both", expand=True, padx=16, pady=16)
 
-        top = ttk.LabelFrame(main, text="Entrada", padding=12)
+        top = ttk.LabelFrame(main, text="📄 Entrada", padding=12)
         top.pack(fill="x", pady=8)
         self.file_label = ttk.Label(top, text="No seleccionado", foreground="gray")
         self.file_label.pack(anchor="w", pady=4)
         self.info_label = ttk.Label(top, text="", foreground="#555")
         self.info_label.pack(anchor="w", pady=2)
-        ttk.Button(top, text="Seleccionar PDF", command=self.select_pdf).pack(anchor="w", pady=6)
+        ttk.Button(top, text="📁 Seleccionar PDF", command=self.select_pdf).pack(anchor="w", pady=6)
 
-        cfg = ttk.LabelFrame(main, text="Opciones", padding=12)
+        cfg = ttk.LabelFrame(main, text="⚙️ Opciones", padding=12)
         cfg.pack(fill="x", pady=8)
 
         ttk.Label(cfg, text="Rango de paginas (vacio = todo):").grid(row=0, column=0, sticky="w", padx=4, pady=4)
@@ -183,9 +190,9 @@ class PDFToImageTab(BaseTab):
 
         action = ttk.Frame(main)
         action.pack(fill="x", pady=8)
-        ttk.Button(action, text="Convertir a JPG", command=self.convert).pack(side="left", padx=4)
+        ttk.Button(action, text="🖼️ Convertir a JPG", command=self.convert).pack(side="left", padx=4)
 
-        progress_box = ttk.LabelFrame(main, text="Progreso", padding=12)
+        progress_box = ttk.LabelFrame(main, text="📊 Progreso", padding=12)
         progress_box.pack(fill="x", pady=8)
         self.progress = ttk.Progressbar(progress_box, mode="determinate")
         self.progress.pack(fill="x", padx=4, pady=4)
@@ -270,14 +277,14 @@ class ImageToPDFTab(BaseTab):
         main.pack(fill="both", expand=True, padx=16, pady=16)
 
         # Entrada
-        in_box = ttk.LabelFrame(main, text="Entrada de imagenes", padding=12)
+        in_box = ttk.LabelFrame(main, text="🖼️ Entrada de imagenes", padding=12)
         in_box.pack(fill="both", expand=True, pady=8)
 
         ctrl = ttk.Frame(in_box)
         ctrl.pack(fill="x", pady=4)
-        ttk.Button(ctrl, text="Agregar imagenes", command=self.add_images).pack(side="left", padx=4)
-        ttk.Button(ctrl, text="Agregar carpeta", command=self.add_folder).pack(side="left", padx=4)
-        ttk.Button(ctrl, text="Limpiar", command=self.clear_images).pack(side="left", padx=4)
+        ttk.Button(ctrl, text="➕ Agregar imagenes", command=self.add_images).pack(side="left", padx=4)
+        ttk.Button(ctrl, text="📂 Agregar carpeta", command=self.add_folder).pack(side="left", padx=4)
+        ttk.Button(ctrl, text="🧹 Limpiar", command=self.clear_images).pack(side="left", padx=4)
 
         self.drop_hint = ttk.Label(
             in_box,
@@ -290,7 +297,7 @@ class ImageToPDFTab(BaseTab):
         self.listbox.pack(fill="both", expand=True, padx=4, pady=4)
 
         # Opciones
-        opt = ttk.LabelFrame(main, text="Opciones", padding=12)
+        opt = ttk.LabelFrame(main, text="⚙️ Opciones", padding=12)
         opt.pack(fill="x", pady=8)
         ttk.Label(opt, text="Rango de hojas (vacio = todas):").grid(row=0, column=0, sticky="w", padx=4, pady=4)
         self.range_var = tk.StringVar()
@@ -304,15 +311,15 @@ class ImageToPDFTab(BaseTab):
 
         action = ttk.Frame(main)
         action.pack(fill="x", pady=8)
-        ttk.Button(action, text="Agregar a cola", command=self.enqueue_current).pack(side="left", padx=4)
-        ttk.Button(action, text="Procesar cola", command=self.process_queue).pack(side="left", padx=4)
+        ttk.Button(action, text="🧺 Agregar a cola", command=self.enqueue_current).pack(side="left", padx=4)
+        ttk.Button(action, text="🚀 Procesar cola", command=self.process_queue).pack(side="left", padx=4)
 
-        queue_box = ttk.LabelFrame(main, text="Cola de conversion", padding=12)
+        queue_box = ttk.LabelFrame(main, text="📚 Cola de conversion", padding=12)
         queue_box.pack(fill="both", expand=True, pady=8)
         self.queue_list = tk.Listbox(queue_box, height=6)
         self.queue_list.pack(fill="both", expand=True, padx=4, pady=4)
 
-        progress_box = ttk.LabelFrame(main, text="Progreso", padding=12)
+        progress_box = ttk.LabelFrame(main, text="📊 Progreso", padding=12)
         progress_box.pack(fill="x", pady=8)
         self.progress = ttk.Progressbar(progress_box, mode="determinate")
         self.progress.pack(fill="x", padx=4, pady=4)
@@ -439,6 +446,174 @@ class ImageToPDFTab(BaseTab):
         threading.Thread(target=self._process_worker, daemon=True).start()
 
 
+class ImageFormatConvertTab(BaseTab):
+    """Tab para convertir imagenes a otros formatos compatibles."""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.image_paths = []
+        self.setup_ui()
+
+    def setup_ui(self):
+        main = ttk.Frame(self, style="Main.TFrame")
+        main.pack(fill="both", expand=True, padx=16, pady=16)
+
+        in_box = ttk.LabelFrame(main, text="🖼️ Entrada", padding=12)
+        in_box.pack(fill="both", expand=True, pady=8)
+
+        ctrl = ttk.Frame(in_box)
+        ctrl.pack(fill="x", pady=4)
+        ttk.Button(ctrl, text="➕ Agregar imagenes", command=self.add_images).pack(side="left", padx=4)
+        ttk.Button(ctrl, text="📂 Agregar carpeta", command=self.add_folder).pack(side="left", padx=4)
+        ttk.Button(ctrl, text="🧹 Limpiar", command=self.clear_images).pack(side="left", padx=4)
+
+        self.drop_hint = ttk.Label(
+            in_box,
+            text="Arrastra y suelta archivos o carpetas aqui",
+            foreground="#555",
+        )
+        self.drop_hint.pack(anchor="w", padx=4, pady=4)
+
+        self.listbox = tk.Listbox(in_box, height=9)
+        self.listbox.pack(fill="both", expand=True, padx=4, pady=4)
+
+        opt = ttk.LabelFrame(main, text="⚙️ Opciones", padding=12)
+        opt.pack(fill="x", pady=8)
+
+        ttk.Label(opt, text="Formato destino:").grid(row=0, column=0, sticky="w", padx=4, pady=4)
+        self.target_var = tk.StringVar(value="png")
+        formats = ImageFormatConverter.list_supported_targets()
+        self.target_combo = ttk.Combobox(opt, textvariable=self.target_var, values=formats, state="readonly")
+        self.target_combo.grid(row=0, column=1, sticky="ew", padx=4, pady=4)
+
+        ttk.Label(opt, text="Calidad (JPG/WEBP/AVIF):").grid(row=1, column=0, sticky="w", padx=4, pady=4)
+        self.quality_var = tk.IntVar(value=95)
+        quality = ttk.Scale(opt, from_=1, to=100, variable=self.quality_var, command=self._refresh_quality)
+        quality.grid(row=1, column=1, sticky="ew", padx=4, pady=4)
+        self.quality_label = ttk.Label(opt, text="95%")
+        self.quality_label.grid(row=1, column=2, sticky="w", padx=4)
+        opt.columnconfigure(1, weight=1)
+
+        action = ttk.Frame(main)
+        action.pack(fill="x", pady=8)
+        ttk.Button(action, text="🎨 Convertir imagenes", command=self.convert).pack(side="left", padx=4)
+
+        progress_box = ttk.LabelFrame(main, text="📊 Progreso", padding=12)
+        progress_box.pack(fill="x", pady=8)
+        self.progress = ttk.Progressbar(progress_box, mode="determinate")
+        self.progress.pack(fill="x", padx=4, pady=4)
+        self.progress_label = ttk.Label(progress_box, text="Sin proceso")
+        self.progress_label.pack(anchor="w", padx=4)
+
+        self.build_status_bar()
+        self._enable_dnd()
+
+    def _enable_dnd(self):
+        try:
+            drop_register = getattr(self, "drop_target_register", None)
+            drop_bind = getattr(self, "dnd_bind", None)
+            if callable(drop_register) and callable(drop_bind):
+                drop_register("DND_Files")
+                drop_bind("<<Drop>>", self._on_drop)
+            else:
+                self.drop_hint.config(text="Drag&Drop no disponible en este entorno")
+        except Exception:
+            self.drop_hint.config(text="Drag&Drop no disponible en este entorno")
+
+    def _on_drop(self, event):
+        raw = event.data.strip()
+        for item in self.tk.splitlist(raw):
+            p = Path(item)
+            if p.is_dir():
+                try:
+                    found = ImageFormatConverter.list_images_from_path(str(p))
+                    for path_obj in found:
+                        value = str(path_obj)
+                        if value not in self.image_paths:
+                            self.image_paths.append(value)
+                except Exception:
+                    continue
+            elif p.is_file() and p.suffix.lower() in SOURCE_EXTENSIONS:
+                value = str(p)
+                if value not in self.image_paths:
+                    self.image_paths.append(value)
+        self._refresh_list()
+
+    def _refresh_quality(self, _value=None):
+        self.quality_label.config(text=f"{int(float(self.quality_var.get()))}%")
+
+    def _refresh_list(self):
+        self.listbox.delete(0, tk.END)
+        for idx, item in enumerate(self.image_paths, start=1):
+            self.listbox.insert(tk.END, f"{idx:03d}. {Path(item).name}")
+        self.status_var.set(f"Imagenes cargadas: {len(self.image_paths)}")
+
+    def add_images(self):
+        paths = filedialog.askopenfilenames(
+            title="Selecciona imagenes",
+            filetypes=[("Imagenes", "*.jpg *.jpeg *.png *.webp *.bmp *.tif *.tiff *.ico *.avif")],
+        )
+        for p in paths:
+            if p not in self.image_paths:
+                self.image_paths.append(p)
+        self._refresh_list()
+
+    def add_folder(self):
+        folder = filedialog.askdirectory(title="Selecciona carpeta con imagenes")
+        if not folder:
+            return
+        try:
+            found = ImageFormatConverter.list_images_from_path(folder)
+            for path_obj in found:
+                item = str(path_obj)
+                if item not in self.image_paths:
+                    self.image_paths.append(item)
+            self._refresh_list()
+        except Exception as exc:
+            messagebox.showerror("Error", str(exc))
+
+    def clear_images(self):
+        self.image_paths = []
+        self._refresh_list()
+
+    def _on_progress(self, current: int, total: int, filename: str):
+        def _ui():
+            self.progress.configure(maximum=max(total, 1), value=current)
+            self.progress_label.config(text=f"{current}/{total} - {filename}")
+            self.status_var.set(f"Convirtiendo... {current}/{total}")
+        self.on_ui(_ui)
+
+    def _worker(self):
+        result = ImageFormatConverter.convert_images(
+            image_paths=self.image_paths,
+            output_dir=str(IMAGE_CONVERT_OUTPUT_DIR),
+            target_format=self.target_var.get(),
+            quality=int(float(self.quality_var.get())),
+            progress_callback=self._on_progress,
+        )
+
+        if result.get("success"):
+            def _ok():
+                self.status_var.set(result["message"])
+                self.progress_label.config(text="Proceso finalizado")
+                messagebox.showinfo(
+                    "Completado",
+                    f"{result['message']}\n\nSalida: {result['output_directory']}\nFormato: {result['target_format'].upper()}",
+                )
+            self.on_ui(_ok)
+        else:
+            self.on_ui(lambda: messagebox.showerror("Error", result.get("error", "Error desconocido")))
+
+    def convert(self):
+        if not self.image_paths:
+            messagebox.showwarning("Aviso", "No hay imagenes para convertir")
+            return
+        self.progress.configure(value=0)
+        self.progress_label.config(text="Iniciando...")
+        self.status_var.set("Convirtiendo imagenes...")
+        threading.Thread(target=self._worker, daemon=True).start()
+
+
 class PDFExtractToolApp(tk.Tk):
     """Aplicacion principal."""
 
@@ -447,8 +622,18 @@ class PDFExtractToolApp(tk.Tk):
         self.title(GUI_CONFIG["title"])
         self.geometry(f"{GUI_CONFIG['window_width']}x{GUI_CONFIG['window_height']}")
         self.minsize(860, 620)
+        self._setup_window_icon()
         ModernStyle.configure_styles()
         self.setup_ui()
+
+    def _setup_window_icon(self):
+        """Carga icono .ico de la aplicacion si existe."""
+        try:
+            icon_path = Path(__file__).resolve().parent.parent.parent / "logo.ico"
+            if icon_path.exists():
+                self.iconbitmap(str(icon_path))
+        except Exception:
+            pass
 
     def setup_ui(self):
         self.rowconfigure(1, weight=1)
@@ -457,8 +642,8 @@ class PDFExtractToolApp(tk.Tk):
         header = ttk.Frame(self, style="Header.TFrame", height=76)
         header.grid(row=0, column=0, sticky="nsew")
         header.grid_propagate(False)
-        ttk.Label(header, text="PDF Extract Tool", style="Title.TLabel").pack(anchor="center", pady=(12, 2))
-        ttk.Label(header, text="Extractor, PDF->JPG e Imagen->PDF", style="Header.TLabel").pack(anchor="center")
+        ttk.Label(header, text="📚 PDF Extract Tool", style="Title.TLabel").pack(anchor="center", pady=(12, 2))
+        ttk.Label(header, text="✂️ Extractor | 🖼️ PDF->JPG | 🧩 Imagen->PDF | 🎨 Imagen->Imagen", style="Header.TLabel").pack(anchor="center")
 
         container = ttk.Frame(self, style="Main.TFrame")
         container.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
@@ -468,14 +653,15 @@ class PDFExtractToolApp(tk.Tk):
         notebook = ttk.Notebook(container)
         notebook.grid(row=0, column=0, sticky="nsew")
 
-        notebook.add(PDFExtractorTab(notebook), text="Extraer paginas")
-        notebook.add(PDFToImageTab(notebook), text="PDF a JPG")
-        notebook.add(ImageToPDFTab(notebook), text="Imagenes a PDF")
+        notebook.add(PDFExtractorTab(notebook), text="✂️ Extraer paginas")
+        notebook.add(PDFToImageTab(notebook), text="🖼️ PDF a JPG")
+        notebook.add(ImageToPDFTab(notebook), text="🧩 Imagenes a PDF")
+        notebook.add(ImageFormatConvertTab(notebook), text="🎨 Imagen a formato")
 
         footer = ttk.Frame(self)
         footer.grid(row=2, column=0, sticky="ew", padx=10, pady=(0, 8))
         ttk.Label(footer, text="v1.1", foreground="gray").pack(side="left")
-        ttk.Button(footer, text="Acerca de", command=self.show_about).pack(side="right")
+        ttk.Button(footer, text="ℹ️ Acerca de", command=self.show_about).pack(side="right")
 
     def show_about(self):
         messagebox.showinfo(
@@ -483,7 +669,8 @@ class PDFExtractToolApp(tk.Tk):
             "PDF Extract Tool v1.1\n\n"
             "- Extrae paginas de PDF\n"
             "- Convierte PDF a JPG con rango y progreso\n"
-            "- Convierte imagenes a PDF (cola, drag&drop, rango, no sobrescribe)",
+            "- Convierte imagenes a PDF (cola, drag&drop, rango, no sobrescribe)\n"
+            "- Convierte imagenes entre formatos (jpg/png/webp/avif/ico/etc)",
         )
 
 

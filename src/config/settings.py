@@ -18,6 +18,7 @@ PDF_INPUT_DIR = LEGACY_PDF_DIR if LEGACY_PDF_DIR.exists() else DATA_DIR / "pdfs"
 IMAGE_OUTPUT_DIR = LEGACY_IMG_DIR if LEGACY_IMG_DIR.exists() else OUTPUT_DIR / "imagenes_jpg"
 PDF_OUTPUT_DIR = OUTPUT_DIR / "pdfs_extraidos"
 IMAGE_TO_PDF_OUTPUT_DIR = OUTPUT_DIR / "pdf_generados_desde_imagenes"
+IMAGE_CONVERT_OUTPUT_DIR = OUTPUT_DIR / "imagenes_convertidas"
 
 # Crear directorios si no existen
 for directory in [
@@ -27,6 +28,7 @@ for directory in [
     IMAGE_OUTPUT_DIR,
     PDF_OUTPUT_DIR,
     IMAGE_TO_PDF_OUTPUT_DIR,
+    IMAGE_CONVERT_OUTPUT_DIR,
 ]:
     directory.mkdir(parents=True, exist_ok=True)
 
