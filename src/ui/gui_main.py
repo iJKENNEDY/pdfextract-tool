@@ -30,6 +30,7 @@ class ModernStyle:
         style.theme_use("clam")
         style.configure("Main.TFrame", background=GUI_CONFIG["theme_bg"])
         style.configure("Header.TFrame", background=GUI_CONFIG["theme_primary"])
+        style.configure("Card.TFrame", background="white")
         style.configure(
             "Title.TLabel",
             font=GUI_CONFIG["font_title"],
@@ -43,6 +44,19 @@ class ModernStyle:
             foreground="white",
         )
         style.configure("Normal.TLabel", font=GUI_CONFIG["font_main"], background=GUI_CONFIG["theme_bg"])
+
+        # Secciones por color (combinaciones suaves)
+        section_styles = {
+            "Extract": ("#E8F1FF", "#2E4F7A"),
+            "PdfImg": ("#EAFBF3", "#2C6B4F"),
+            "ImgPdf": ("#FFF4E8", "#8A4F20"),
+            "ImgFmt": ("#F3ECFF", "#5A3E8E"),
+        }
+        for prefix, (bg, fg) in section_styles.items():
+            style.configure(f"{prefix}.TLabelframe", background=bg, borderwidth=1)
+            style.configure(f"{prefix}.TLabelframe.Label", background=bg, foreground=fg, font=("Segoe UI", 10, "bold"))
+            style.configure(f"{prefix}.TFrame", background=bg)
+            style.configure(f"{prefix}.TLabel", background=bg, foreground=fg)
 
 
 class BaseTab(ttk.Frame):
@@ -69,20 +83,20 @@ class PDFExtractorTab(BaseTab):
         self.setup_ui()
 
     def setup_ui(self):
-        main = ttk.Frame(self, style="Main.TFrame")
+        main = ttk.Frame(self, style="Extract.TFrame")
         main.pack(fill="both", expand=True, padx=16, pady=16)
 
-        file_box = ttk.LabelFrame(main, text="📄 PDF de entrada", padding=12)
+        file_box = ttk.LabelFrame(main, text="📄 PDF de entrada", padding=12, style="Extract.TLabelframe")
         file_box.pack(fill="x", pady=8)
-        self.file_label = ttk.Label(file_box, text="No seleccionado", foreground="gray")
+        self.file_label = ttk.Label(file_box, text="No seleccionado", foreground="gray", style="Extract.TLabel")
         self.file_label.pack(anchor="w", pady=4)
-        self.info_label = ttk.Label(file_box, text="", foreground="#555")
+        self.info_label = ttk.Label(file_box, text="", foreground="#555", style="Extract.TLabel")
         self.info_label.pack(anchor="w", pady=2)
         ttk.Button(file_box, text="📁 Seleccionar PDF", command=self.select_file).pack(anchor="w", pady=6)
 
-        pages_box = ttk.LabelFrame(main, text="🔢 Rango de paginas", padding=12)
+        pages_box = ttk.LabelFrame(main, text="🔢 Rango de paginas", padding=12, style="Extract.TLabelframe")
         pages_box.pack(fill="x", pady=8)
-        ttk.Label(pages_box, text="Ejemplo: 1-3,5,7-9").pack(anchor="w")
+        ttk.Label(pages_box, text="Ejemplo: 1-3,5,7-9", style="Extract.TLabel").pack(anchor="w")
         self.pages_var = tk.StringVar()
         ttk.Entry(pages_box, textvariable=self.pages_var).pack(fill="x", pady=6)
 
@@ -154,18 +168,18 @@ class PDFToImageTab(BaseTab):
         self.setup_ui()
 
     def setup_ui(self):
-        main = ttk.Frame(self, style="Main.TFrame")
+        main = ttk.Frame(self, style="PdfImg.TFrame")
         main.pack(fill="both", expand=True, padx=16, pady=16)
 
-        top = ttk.LabelFrame(main, text="📄 Entrada", padding=12)
+        top = ttk.LabelFrame(main, text="📄 Entrada", padding=12, style="PdfImg.TLabelframe")
         top.pack(fill="x", pady=8)
-        self.file_label = ttk.Label(top, text="No seleccionado", foreground="gray")
+        self.file_label = ttk.Label(top, text="No seleccionado", foreground="gray", style="PdfImg.TLabel")
         self.file_label.pack(anchor="w", pady=4)
-        self.info_label = ttk.Label(top, text="", foreground="#555")
+        self.info_label = ttk.Label(top, text="", foreground="#555", style="PdfImg.TLabel")
         self.info_label.pack(anchor="w", pady=2)
         ttk.Button(top, text="📁 Seleccionar PDF", command=self.select_pdf).pack(anchor="w", pady=6)
 
-        cfg = ttk.LabelFrame(main, text="⚙️ Opciones", padding=12)
+        cfg = ttk.LabelFrame(main, text="⚙️ Opciones", padding=12, style="PdfImg.TLabelframe")
         cfg.pack(fill="x", pady=8)
 
         ttk.Label(cfg, text="Rango de paginas (vacio = todo):").grid(row=0, column=0, sticky="w", padx=4, pady=4)
@@ -192,7 +206,7 @@ class PDFToImageTab(BaseTab):
         action.pack(fill="x", pady=8)
         ttk.Button(action, text="🖼️ Convertir a JPG", command=self.convert).pack(side="left", padx=4)
 
-        progress_box = ttk.LabelFrame(main, text="📊 Progreso", padding=12)
+        progress_box = ttk.LabelFrame(main, text="📊 Progreso", padding=12, style="PdfImg.TLabelframe")
         progress_box.pack(fill="x", pady=8)
         self.progress = ttk.Progressbar(progress_box, mode="determinate")
         self.progress.pack(fill="x", padx=4, pady=4)
@@ -273,11 +287,11 @@ class ImageToPDFTab(BaseTab):
         self.setup_ui()
 
     def setup_ui(self):
-        main = ttk.Frame(self, style="Main.TFrame")
+        main = ttk.Frame(self, style="ImgPdf.TFrame")
         main.pack(fill="both", expand=True, padx=16, pady=16)
 
         # Entrada
-        in_box = ttk.LabelFrame(main, text="🖼️ Entrada de imagenes", padding=12)
+        in_box = ttk.LabelFrame(main, text="🖼️ Entrada de imagenes", padding=12, style="ImgPdf.TLabelframe")
         in_box.pack(fill="both", expand=True, pady=8)
 
         ctrl = ttk.Frame(in_box)
@@ -290,6 +304,7 @@ class ImageToPDFTab(BaseTab):
             in_box,
             text="Arrastra y suelta archivos o directorios aqui",
             foreground="#555",
+            style="ImgPdf.TLabel",
         )
         self.drop_hint.pack(anchor="w", padx=4, pady=4)
 
@@ -297,7 +312,7 @@ class ImageToPDFTab(BaseTab):
         self.listbox.pack(fill="both", expand=True, padx=4, pady=4)
 
         # Opciones
-        opt = ttk.LabelFrame(main, text="⚙️ Opciones", padding=12)
+        opt = ttk.LabelFrame(main, text="⚙️ Opciones", padding=12, style="ImgPdf.TLabelframe")
         opt.pack(fill="x", pady=8)
         ttk.Label(opt, text="Rango de hojas (vacio = todas):").grid(row=0, column=0, sticky="w", padx=4, pady=4)
         self.range_var = tk.StringVar()
@@ -314,12 +329,12 @@ class ImageToPDFTab(BaseTab):
         ttk.Button(action, text="🧺 Agregar a cola", command=self.enqueue_current).pack(side="left", padx=4)
         ttk.Button(action, text="🚀 Procesar cola", command=self.process_queue).pack(side="left", padx=4)
 
-        queue_box = ttk.LabelFrame(main, text="📚 Cola de conversion", padding=12)
+        queue_box = ttk.LabelFrame(main, text="📚 Cola de conversion", padding=12, style="ImgPdf.TLabelframe")
         queue_box.pack(fill="both", expand=True, pady=8)
         self.queue_list = tk.Listbox(queue_box, height=6)
         self.queue_list.pack(fill="both", expand=True, padx=4, pady=4)
 
-        progress_box = ttk.LabelFrame(main, text="📊 Progreso", padding=12)
+        progress_box = ttk.LabelFrame(main, text="📊 Progreso", padding=12, style="ImgPdf.TLabelframe")
         progress_box.pack(fill="x", pady=8)
         self.progress = ttk.Progressbar(progress_box, mode="determinate")
         self.progress.pack(fill="x", padx=4, pady=4)
@@ -455,10 +470,10 @@ class ImageFormatConvertTab(BaseTab):
         self.setup_ui()
 
     def setup_ui(self):
-        main = ttk.Frame(self, style="Main.TFrame")
+        main = ttk.Frame(self, style="ImgFmt.TFrame")
         main.pack(fill="both", expand=True, padx=16, pady=16)
 
-        in_box = ttk.LabelFrame(main, text="🖼️ Entrada", padding=12)
+        in_box = ttk.LabelFrame(main, text="🖼️ Entrada", padding=12, style="ImgFmt.TLabelframe")
         in_box.pack(fill="both", expand=True, pady=8)
 
         ctrl = ttk.Frame(in_box)
@@ -471,13 +486,14 @@ class ImageFormatConvertTab(BaseTab):
             in_box,
             text="Arrastra y suelta archivos o carpetas aqui",
             foreground="#555",
+            style="ImgFmt.TLabel",
         )
         self.drop_hint.pack(anchor="w", padx=4, pady=4)
 
         self.listbox = tk.Listbox(in_box, height=9)
         self.listbox.pack(fill="both", expand=True, padx=4, pady=4)
 
-        opt = ttk.LabelFrame(main, text="⚙️ Opciones", padding=12)
+        opt = ttk.LabelFrame(main, text="⚙️ Opciones", padding=12, style="ImgFmt.TLabelframe")
         opt.pack(fill="x", pady=8)
 
         ttk.Label(opt, text="Formato destino:").grid(row=0, column=0, sticky="w", padx=4, pady=4)
@@ -498,7 +514,7 @@ class ImageFormatConvertTab(BaseTab):
         action.pack(fill="x", pady=8)
         ttk.Button(action, text="🎨 Convertir imagenes", command=self.convert).pack(side="left", padx=4)
 
-        progress_box = ttk.LabelFrame(main, text="📊 Progreso", padding=12)
+        progress_box = ttk.LabelFrame(main, text="📊 Progreso", padding=12, style="ImgFmt.TLabelframe")
         progress_box.pack(fill="x", pady=8)
         self.progress = ttk.Progressbar(progress_box, mode="determinate")
         self.progress.pack(fill="x", padx=4, pady=4)
