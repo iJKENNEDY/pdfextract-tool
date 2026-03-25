@@ -410,7 +410,6 @@ class ImageToPDFTab(BaseTab):
     def __init__(self, parent):
         super().__init__(parent)
         self.image_paths = []
-        self.queue_items = []
         self.setup_ui()
 
     def setup_ui(self):
@@ -442,24 +441,27 @@ class ImageToPDFTab(BaseTab):
         opt = ttk.LabelFrame(main, text="⚙️ Opciones", padding=12, style="ImgPdf.TLabelframe")
         opt.pack(fill="x", pady=8)
         ttk.Label(opt, text="Rango de hojas (vacio = todas):").grid(row=0, column=0, sticky="w", padx=4, pady=4)
-        self.range_var = tk.StringVar()
+        self.range_var = tk.StringVar(value="1")
         ttk.Entry(opt, textvariable=self.range_var).grid(row=0, column=1, sticky="ew", padx=4, pady=4)
 
         ttk.Label(opt, text="Nombre base PDF:").grid(row=1, column=0, sticky="w", padx=4, pady=4)
         self.output_name_var = tk.StringVar(value="imagenes_convertidas")
         ttk.Entry(opt, textvariable=self.output_name_var).grid(row=1, column=1, sticky="ew", padx=4, pady=4)
 
+        ttk.Label(opt, text="Modo de conversion:").grid(row=2, column=0, sticky="w", padx=4, pady=4)
+        self.mode_var = tk.StringVar(value="todo")
+        ttk.Combobox(
+            opt,
+            textvariable=self.mode_var,
+            state="readonly",
+            values=["todo", "individual"],
+        ).grid(row=2, column=1, sticky="ew", padx=4, pady=4)
+
         opt.columnconfigure(1, weight=1)
 
         action = ttk.Frame(main)
         action.pack(fill="x", pady=8)
-        ttk.Button(action, text="🧺 Agregar a cola", command=self.enqueue_current).pack(side="left", padx=4)
-        ttk.Button(action, text="🚀 Procesar cola", command=self.process_queue).pack(side="left", padx=4)
-
-        queue_box = ttk.LabelFrame(main, text="📚 Cola de conversion", padding=12, style="ImgPdf.TLabelframe")
-        queue_box.pack(fill="both", expand=True, pady=8)
-        self.queue_list = tk.Listbox(queue_box, height=6)
-        self.queue_list.pack(fill="both", expand=True, padx=4, pady=4)
+        ttk.Button(action, text="🚀 Convertir", command=self.process_conversion).pack(side="left", padx=4)
 
         progress_box = ttk.LabelFrame(main, text="📊 Progreso", padding=12, style="ImgPdf.TLabelframe")
         progress_box.pack(fill="x", pady=8)
@@ -531,61 +533,82 @@ class ImageToPDFTab(BaseTab):
         self.image_paths = []
         self._refresh_list()
 
-    def enqueue_current(self):
-        if not self.image_paths:
-            messagebox.showwarning("Aviso", "No hay imagenes para agregar")
-            return
-        item = {
-            "images": list(self.image_paths),
-            "range": self.range_var.get().strip() or None,
-            "name": self.output_name_var.get().strip() or "imagenes_convertidas",
-        }
-        self.queue_items.append(item)
-        self.queue_list.insert(tk.END, f"{item['name']} | imgs:{len(item['images'])} | rango:{item['range'] or 'todo'}")
-        self.status_var.set(f"Elementos en cola: {len(self.queue_items)}")
-
     def _on_progress(self, current: int, total: int, filename: str):
         def _ui():
             self.progress.configure(maximum=max(total, 1), value=current)
             self.progress_label.config(text=f"{current}/{total} - {filename}")
         self.on_ui(_ui)
 
-    def _process_worker(self):
-        completed = 0
-        outputs = []
-        total_jobs = len(self.queue_items)
-        for idx, job in enumerate(list(self.queue_items), start=1):
-            self.on_ui(lambda i=idx, t=total_jobs: self.status_var.set(f"Procesando cola {i}/{t}"))
-            result = ImageToPDFConverter.convert_images_to_pdf(
-                image_paths=job["images"],
-                output_dir=str(IMAGE_TO_PDF_OUTPUT_DIR),
-                output_name=job["name"],
-                range_str=job["range"],
-                progress_callback=self._on_progress,
-            )
-            if result.get("success"):
-                completed += 1
-                outputs.append(result["output_path"])
+    def _process_all_images(self):
+        result = ImageToPDFConverter.convert_images_to_pdf(
+            image_paths=list(self.image_paths),
+            output_dir=str(IMAGE_TO_PDF_OUTPUT_DIR),
+            output_name=self.output_name_var.get().strip() or "imagenes_convertidas",
+            range_str=self.range_var.get().strip() or None,
+            progress_callback=self._on_progress,
+        )
 
         def _done():
-            self.queue_items = []
-            self.queue_list.delete(0, tk.END)
+            if result.get("success"):
+                self.progress_label.config(text="Proceso finalizado")
+                self.status_var.set(result["message"])
+                messagebox.showinfo(
+                    "Completado",
+                    f"{result['message']}\n\nSalida: {result['output_directory']}\nArchivo: {result['output_path']}",
+                )
+            else:
+                self.status_var.set("Error en conversion")
+                messagebox.showerror("Error", result.get("error", "Error desconocido"))
+
+        self.on_ui(_done)
+
+    def _process_individual_images(self):
+        outputs = []
+        total = len(self.image_paths)
+        success_count = 0
+        base_name = self.output_name_var.get().strip() or "imagen"
+
+        for idx, image_path in enumerate(self.image_paths, start=1):
+            file_stem = Path(image_path).stem
+            output_name = f"{base_name}_{file_stem}"
+
+            result = ImageToPDFConverter.convert_images_to_pdf(
+                image_paths=[image_path],
+                output_dir=str(IMAGE_TO_PDF_OUTPUT_DIR),
+                output_name=output_name,
+                range_str="1",
+            )
+
+            if result.get("success"):
+                success_count += 1
+                outputs.append(result["output_path"])
+
+            self.on_ui(lambda i=idx, t=total, n=file_stem: self._on_progress(i, t, n))
+
+        def _done():
             self.progress_label.config(text="Proceso finalizado")
-            self.status_var.set(f"Cola completada: {completed}/{total_jobs}")
+            self.status_var.set(f"Conversion individual completada: {success_count}/{total}")
             messagebox.showinfo(
                 "Completado",
-                f"PDFs generados: {completed}/{total_jobs}\n\nSalida: {IMAGE_TO_PDF_OUTPUT_DIR}\n\n" + "\n".join(outputs[:10]),
+                f"PDFs generados: {success_count}/{total}\n\nSalida: {IMAGE_TO_PDF_OUTPUT_DIR}\n\n" + "\n".join(outputs[:10]),
             )
 
         self.on_ui(_done)
 
-    def process_queue(self):
-        if not self.queue_items:
-            messagebox.showwarning("Aviso", "La cola esta vacia")
+    def process_conversion(self):
+        if not self.image_paths:
+            messagebox.showwarning("Aviso", "No hay imagenes seleccionadas")
             return
+
+        mode = self.mode_var.get().strip().lower()
         self.progress.configure(value=0)
         self.progress_label.config(text="Iniciando...")
-        threading.Thread(target=self._process_worker, daemon=True).start()
+        self.status_var.set(f"Convirtiendo en modo: {mode}")
+
+        if mode == "individual":
+            threading.Thread(target=self._process_individual_images, daemon=True).start()
+        else:
+            threading.Thread(target=self._process_all_images, daemon=True).start()
 
 
 class ImageFormatConvertTab(BaseTab):
