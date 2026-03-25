@@ -3,7 +3,8 @@ pdfs/
 data/pdfs/
 output/
 imagenes_jpg/
-
+src/output
+notas-dev.txt
 # Archivos compilados
 __pycache__/
 *.py[cod]

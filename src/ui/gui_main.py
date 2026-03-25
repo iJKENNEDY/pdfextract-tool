@@ -13,12 +13,14 @@ from src.config.settings import (
     IMAGE_CONVERT_OUTPUT_DIR,
     IMAGE_OUTPUT_DIR,
     IMAGE_TO_PDF_OUTPUT_DIR,
+    PDF_MERGE_OUTPUT_DIR,
     PDF_OUTPUT_DIR,
 )
 from src.services.image_format_converter import SOURCE_EXTENSIONS, ImageFormatConverter
 from src.services.image_to_pdf_converter import IMAGE_EXTENSIONS, ImageToPDFConverter
 from src.services.pdf_converter import PDFToImageConverter
 from src.services.pdf_extractor import PDFExtractor
+from src.services.pdf_merger import PDFMergerService
 
 
 class ModernStyle:
@@ -157,6 +159,131 @@ class PDFExtractorTab(BaseTab):
             return
         self.status_var.set("Extrayendo...")
         threading.Thread(target=self._run_extract, args=(out,), daemon=True).start()
+
+
+class PDFMergeTab(BaseTab):
+    """Tab para unir multiples PDFs."""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.pdf_paths = []
+        self.setup_ui()
+
+    def setup_ui(self):
+        main = ttk.Frame(self, style="Extract.TFrame")
+        main.pack(fill="both", expand=True, padx=16, pady=16)
+
+        in_box = ttk.LabelFrame(main, text="📚 PDFs a unir", padding=12, style="Extract.TLabelframe")
+        in_box.pack(fill="both", expand=True, pady=8)
+
+        ctrl = ttk.Frame(in_box)
+        ctrl.pack(fill="x", pady=4)
+        ttk.Button(ctrl, text="➕ Agregar PDFs", command=self.add_pdfs).pack(side="left", padx=4)
+        ttk.Button(ctrl, text="⬆️ Subir", command=self.move_up).pack(side="left", padx=4)
+        ttk.Button(ctrl, text="⬇️ Bajar", command=self.move_down).pack(side="left", padx=4)
+        ttk.Button(ctrl, text="❌ Quitar", command=self.remove_selected).pack(side="left", padx=4)
+        ttk.Button(ctrl, text="🧹 Limpiar", command=self.clear_list).pack(side="left", padx=4)
+
+        ttk.Label(
+            in_box,
+            text="Se uniran respetando el orden de la lista (arriba a abajo)",
+            style="Extract.TLabel",
+        ).pack(anchor="w", padx=4, pady=(2, 6))
+
+        self.listbox = tk.Listbox(in_box, height=10)
+        self.listbox.pack(fill="both", expand=True, padx=4, pady=4)
+
+        out_box = ttk.LabelFrame(main, text="💾 Salida", padding=12, style="Extract.TLabelframe")
+        out_box.pack(fill="x", pady=8)
+        self.output_var = tk.StringVar(value=str(PDF_MERGE_OUTPUT_DIR / "pdf_unido.pdf"))
+        ttk.Entry(out_box, textvariable=self.output_var).pack(fill="x", pady=4)
+        ttk.Button(out_box, text="📁 Elegir ruta", command=self.pick_output).pack(anchor="w", pady=4)
+
+        action = ttk.Frame(main)
+        action.pack(fill="x", pady=8)
+        ttk.Button(action, text="🔗 Unir PDFs", command=self.merge).pack(side="left", padx=4)
+
+        self.build_status_bar()
+
+    def _refresh_list(self):
+        self.listbox.delete(0, tk.END)
+        for idx, item in enumerate(self.pdf_paths, start=1):
+            self.listbox.insert(tk.END, f"{idx:03d}. {Path(item).name}")
+        self.status_var.set(f"PDFs cargados: {len(self.pdf_paths)}")
+
+    def add_pdfs(self):
+        paths = filedialog.askopenfilenames(title="Selecciona PDFs", filetypes=[("PDF", "*.pdf")])
+        for p in paths:
+            if p not in self.pdf_paths:
+                self.pdf_paths.append(p)
+        self._refresh_list()
+
+    def clear_list(self):
+        self.pdf_paths = []
+        self._refresh_list()
+
+    def remove_selected(self):
+        sel = self.listbox.curselection()
+        if not sel:
+            return
+        index = sel[0]
+        self.pdf_paths.pop(index)
+        self._refresh_list()
+        if index > 0:
+            self.listbox.selection_set(index - 1)
+        elif self.pdf_paths:
+            self.listbox.selection_set(0)
+
+    def move_up(self):
+        sel = self.listbox.curselection()
+        if not sel:
+            return
+        index = sel[0]
+        if index == 0:
+            return
+        self.pdf_paths[index - 1], self.pdf_paths[index] = self.pdf_paths[index], self.pdf_paths[index - 1]
+        self._refresh_list()
+        self.listbox.selection_set(index - 1)
+
+    def move_down(self):
+        sel = self.listbox.curselection()
+        if not sel:
+            return
+        index = sel[0]
+        if index >= len(self.pdf_paths) - 1:
+            return
+        self.pdf_paths[index + 1], self.pdf_paths[index] = self.pdf_paths[index], self.pdf_paths[index + 1]
+        self._refresh_list()
+        self.listbox.selection_set(index + 1)
+
+    def pick_output(self):
+        out = filedialog.asksaveasfilename(
+            defaultextension=".pdf",
+            initialdir=str(PDF_MERGE_OUTPUT_DIR),
+            filetypes=[("PDF", "*.pdf")],
+        )
+        if out:
+            self.output_var.set(out)
+
+    def _worker(self):
+        result = PDFMergerService.merge_pdfs(self.pdf_paths, self.output_var.get())
+        if result.get("success"):
+            def _ok():
+                self.status_var.set(result["message"])
+                messagebox.showinfo(
+                    "Completado",
+                    f"{result['message']}\n\nPDFs unidos: {result['files_merged']}\nPaginas totales: {result['total_pages']}\nArchivo: {result['output_path']}",
+                )
+            self.on_ui(_ok)
+        else:
+            self.on_ui(lambda: messagebox.showerror("Error", result.get("error", "Error desconocido")))
+
+    def merge(self):
+        if len(self.pdf_paths) < 2:
+            messagebox.showwarning("Aviso", "Debes seleccionar al menos 2 PDFs")
+            return
+        self.status_var.set("Uniendo PDFs...")
+        threading.Thread(target=self._worker, daemon=True).start()
 
 
 class PDFToImageTab(BaseTab):
@@ -645,9 +772,12 @@ class PDFExtractToolApp(tk.Tk):
     def _setup_window_icon(self):
         """Carga icono .ico de la aplicacion si existe."""
         try:
-            icon_path = Path(__file__).resolve().parent.parent.parent / "logo.ico"
-            if icon_path.exists():
-                self.iconbitmap(str(icon_path))
+            root_path = Path(__file__).resolve().parent.parent.parent
+            candidates = [root_path / "logo.ico", root_path / "logo123.ico"]
+            for icon_path in candidates:
+                if icon_path.exists():
+                    self.iconbitmap(str(icon_path))
+                    break
         except Exception:
             pass
 
@@ -659,7 +789,7 @@ class PDFExtractToolApp(tk.Tk):
         header.grid(row=0, column=0, sticky="nsew")
         header.grid_propagate(False)
         ttk.Label(header, text="📚 PDF Extract Tool", style="Title.TLabel").pack(anchor="center", pady=(12, 2))
-        ttk.Label(header, text="✂️ Extractor | 🖼️ PDF->JPG | 🧩 Imagen->PDF | 🎨 Imagen->Imagen", style="Header.TLabel").pack(anchor="center")
+        ttk.Label(header, text="✂️ Extraer | 🔗 Unir PDFs | 🖼️ PDF->JPG | 🧩 Imagen->PDF | 🎨 Imagen->Imagen", style="Header.TLabel").pack(anchor="center")
 
         container = ttk.Frame(self, style="Main.TFrame")
         container.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
@@ -670,6 +800,7 @@ class PDFExtractToolApp(tk.Tk):
         notebook.grid(row=0, column=0, sticky="nsew")
 
         notebook.add(PDFExtractorTab(notebook), text="✂️ Extraer paginas")
+        notebook.add(PDFMergeTab(notebook), text="🔗 Unir PDFs")
         notebook.add(PDFToImageTab(notebook), text="🖼️ PDF a JPG")
         notebook.add(ImageToPDFTab(notebook), text="🧩 Imagenes a PDF")
         notebook.add(ImageFormatConvertTab(notebook), text="🎨 Imagen a formato")
@@ -684,6 +815,7 @@ class PDFExtractToolApp(tk.Tk):
             "Acerca de",
             "PDF Extract Tool v1.2\n\n"
             "- Extrae paginas de PDF\n"
+            "- Une multiples PDFs en un solo archivo\n"
             "- Convierte PDF a JPG con rango y progreso\n"
             "- Convierte imagenes a PDF (cola, drag&drop, rango, no sobrescribe)\n"
             "- Convierte imagenes entre formatos (jpg/png/webp/avif/ico/etc)",

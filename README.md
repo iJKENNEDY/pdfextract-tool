@@ -11,6 +11,7 @@ Versión actual: **v1.2**
 Aplicación **GUI + CLI** para:
 - extraer páginas de PDF,
 - convertir PDF a imágenes,
+- unir múltiples PDFs,
 - convertir imágenes a PDF,
 - convertir imágenes entre formatos compatibles.
 
@@ -23,6 +24,7 @@ Aplicación **GUI + CLI** para:
 PDF Extract Tool es una aplicación completa que proporciona múltiples interfaces (CLI y GUI) para:
 - **Extracción de páginas**: Extrae rangos específicos o páginas individuales de PDFs
 - **Conversión a imágenes**: Convierte páginas de PDF a JPG de alta calidad
+- **Unión de PDFs**: Une 2 o más archivos PDF en uno solo
 - **Conversión de imágenes a PDF**: Une una o varias imágenes en PDF
 - **Conversión de imágenes a otros formatos**: Convierte entre JPG, PNG, WEBP, AVIF, ICO, BMP, TIFF (según compatibilidad)
 - **Procesamiento por lotes**: Procesa múltiples archivos simultáneamente
@@ -33,6 +35,12 @@ PDF Extract Tool es una aplicación completa que proporciona múltiples interfac
 - Soporta rangos: `1-3`, `5`, `7-9`
 - Combinación de rangos: `1-3,5,7-9`
 - Validación automática de páginas
+
+🔗 **Unión de PDFs**
+- Une 2 o más archivos PDF
+- Mantiene el orden de selección
+- Permite reordenar archivos antes de unir (GUI: subir/bajar)
+- Evita sobrescribir con nombre enumerado
 
 🖼️ **Conversión de Alta Calidad**
 - Zoom configurable (72 DPI a 288 DPI)
@@ -74,6 +82,7 @@ pdfextract/
 │   ├── services/         # Lógica de negocio reutilizable
 │   │   ├── __init__.py
 │   │   ├── pdf_extractor.py   # Extracción de páginas
+│   │   ├── pdf_merger.py      # Unión de múltiples PDFs
 │   │   ├── pdf_converter.py   # Conversión PDF a JPG
 │   │   ├── image_to_pdf_converter.py  # Conversión imágenes a PDF
 │   │   └── image_format_converter.py  # Conversión entre formatos de imagen
@@ -86,14 +95,17 @@ pdfextract/
 │   └── pdfs/            # PDFs de entrada
 ├── output/              # Archivos generados
 │   ├── pdfs_extraidos/  # PDFs procesados
+│   ├── pdf_unidos/       # PDFs unidos
 │   ├── imagenes_jpg/    # Imágenes convertidas
 │   ├── pdf_generados_desde_imagenes/  # PDFs generados desde imágenes
 │   └── imagenes_convertidas/  # Imágenes convertidas de formato
-├── cli_extract.py       # Script CLI para extracción
-├── cli_convert.py       # Script CLI para conversión
-├── cli_images_to_pdf.py # Script CLI para imágenes a PDF
-├── cli_image_convert.py # Script CLI para imagen -> formato
-├── cli.py               # CLI unificada (extract/pdf2jpg/img2pdf/imgconvert)
+├── cli/
+│   ├── cli_extract.py       # Script CLI para extracción
+│   ├── cli_pdf_merge.py     # Script CLI para unir PDFs
+│   ├── cli_convert.py       # Script CLI para conversión
+│   ├── cli_images_to_pdf.py # Script CLI para imágenes a PDF
+│   ├── cli_image_convert.py # Script CLI para imagen -> formato
+│   └── cli.py               # CLI unificada (extract/merge/pdf2jpg/img2pdf/imgconvert)
 ├── gui_main.py          # Punto de entrada para GUI
 └── README.md
 ```
@@ -164,13 +176,13 @@ Extrae páginas específicas desde la terminal:
 
 ```bash
 # Extrae páginas 1-3 y 5
-python cli_extract.py input.pdf output.pdf "1-3,5"
+python cli/cli_extract.py input.pdf output.pdf "1-3,5"
 
 # Con información detallada
-python cli_extract.py input.pdf output.pdf "1-10" --verbose
+python cli/cli_extract.py input.pdf output.pdf "1-10" --verbose
 
 # Ver ayuda
-python cli_extract.py --help
+python cli/cli_extract.py --help
 ```
 
 ### CLI - Conversión a JPG
@@ -179,16 +191,16 @@ Convierte PDFs a imágenes de alta calidad:
 
 ```bash
 # Convierte un PDF
-python cli_convert.py archivo.pdf
+python cli/cli_convert.py archivo.pdf
 
 # Convierte todos los PDFs en una carpeta
-python cli_convert.py ./pdfs --output ./imagenes --zoom 2.0 --quality 95
+python cli/cli_convert.py ./pdfs --output ./imagenes --zoom 2.0 --quality 95
 
 # Con información detallada
-python cli_convert.py ./pdfs -v
+python cli/cli_convert.py ./pdfs -v
 
 # Ver ayuda
-python cli_convert.py --help
+python cli/cli_convert.py --help
 ```
 
 ### CLI - Imágenes a PDF
@@ -197,16 +209,16 @@ Convierte una o varias imágenes (o carpetas de imágenes) a un PDF:
 
 ```bash
 # Convertir imágenes sueltas
-python cli_images_to_pdf.py foto1.jpg foto2.png --name "album"
+python cli/cli_images_to_pdf.py foto1.jpg foto2.png --name "album"
 
 # Convertir desde carpeta
-python cli_images_to_pdf.py ./imagenes --output ./output/pdfs
+python cli/cli_images_to_pdf.py ./imagenes --output ./output/pdfs
 
 # Convertir con rango (si detectó 10 imágenes, usa solo 1-3 y 6)
-python cli_images_to_pdf.py ./imagenes --range "1-3,6" --name "seleccion"
+python cli/cli_images_to_pdf.py ./imagenes --range "1-3,6" --name "seleccion"
 
 # Con detalle de progreso
-python cli_images_to_pdf.py ./imagenes -v
+python cli/cli_images_to_pdf.py ./imagenes -v
 ```
 
 ### CLI Unificada
@@ -215,16 +227,19 @@ Una sola entrada para todos los flujos:
 
 ```bash
 # Extraer páginas
-python cli.py extract input.pdf output.pdf "1-3,5"
+python cli/cli.py extract input.pdf output.pdf "1-3,5"
+
+# Unir PDFs
+python cli/cli.py merge a.pdf b.pdf c.pdf --output unido.pdf
 
 # PDF a JPG
-python cli.py pdf2jpg input.pdf --range "1-4" --zoom 2.0 --quality 95
+python cli/cli.py pdf2jpg input.pdf --range "1-4" --zoom 2.0 --quality 95
 
 # Imágenes a PDF
-python cli.py img2pdf ./imagenes --name "album" --range "1-10"
+python cli/cli.py img2pdf ./imagenes --name "album" --range "1-10"
 
 # Imágenes a otro formato
-python cli.py imgconvert ./imagenes --to webp --quality 90
+python cli/cli.py imgconvert ./imagenes --to webp --quality 90
 ```
 
 ### CLI - Imágenes a Formato
@@ -233,13 +248,23 @@ Conversión directa de imágenes entre formatos:
 
 ```bash
 # Carpeta completa a PNG
-python cli_image_convert.py ./imagenes --to png
+python cli/cli_image_convert.py ./imagenes --to png
 
 # Varios archivos a WEBP
-python cli_image_convert.py foto1.jpg foto2.png --to webp --quality 90
+python cli/cli_image_convert.py foto1.jpg foto2.png --to webp --quality 90
 
 # Crear iconos ICO
-python cli_image_convert.py ./logos --to ico
+python cli/cli_image_convert.py ./logos --to ico
+```
+
+### CLI - Unir PDFs
+
+```bash
+# Unir 3 PDFs
+python cli/cli_pdf_merge.py a.pdf b.pdf c.pdf --output ./output/pdf_unidos/resultado.pdf
+
+# Con detalle
+python cli/cli_pdf_merge.py a.pdf b.pdf --verbose
 ```
 
 **Opciones de zoom:**
@@ -299,6 +324,7 @@ El proyecto sigue una **arquitectura limpia** con separación clara de responsab
 
 2. **Services**: Lógica de negocio
    - `PDFExtractor`: Extracción de páginas
+   - `PDFMergerService`: Unión de múltiples PDFs
    - `PDFToImageConverter`: Conversión a imágenes
    - `ImageToPDFConverter`: Conversión de imágenes a PDF
    - `PageParser`: Parsing de rangos de páginas

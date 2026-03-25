@@ -10,5 +10,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-ENTRYPOINT ["python", "cli.py"]
+ENTRYPOINT ["python", "cli/cli.py"]
 CMD ["--help"]

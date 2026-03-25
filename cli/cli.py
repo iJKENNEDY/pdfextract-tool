@@ -5,7 +5,7 @@ import argparse
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
 def _load_defaults():
@@ -14,6 +14,7 @@ def _load_defaults():
             IMAGE_CONVERT_OUTPUT_DIR,
             IMAGE_OUTPUT_DIR,
             IMAGE_TO_PDF_OUTPUT_DIR,
+            PDF_MERGE_OUTPUT_DIR,
             PDF_TO_JPG_CONFIG,
         )
 
@@ -21,6 +22,7 @@ def _load_defaults():
             "img_out": str(IMAGE_OUTPUT_DIR),
             "img2pdf_out": str(IMAGE_TO_PDF_OUTPUT_DIR),
             "img_convert_out": str(IMAGE_CONVERT_OUTPUT_DIR),
+            "pdf_merge_out": str(PDF_MERGE_OUTPUT_DIR / "pdf_unido.pdf"),
             "zoom": PDF_TO_JPG_CONFIG.get("zoom", 2.0),
             "quality": PDF_TO_JPG_CONFIG.get("quality", 95),
         }
@@ -29,6 +31,7 @@ def _load_defaults():
             "img_out": "output/imagenes_jpg",
             "img2pdf_out": "output/pdf_generados_desde_imagenes",
             "img_convert_out": "output/imagenes_convertidas",
+            "pdf_merge_out": "output/pdf_unidos/pdf_unido.pdf",
             "zoom": 2.0,
             "quality": 95,
         }
@@ -36,7 +39,7 @@ def _load_defaults():
 
 def build_parser() -> argparse.ArgumentParser:
     defaults = _load_defaults()
-    parser = argparse.ArgumentParser(description="CLI unificada: extract, pdf2jpg, img2pdf, imgconvert")
+    parser = argparse.ArgumentParser(description="CLI unificada: extract, merge, pdf2jpg, img2pdf, imgconvert")
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_extract = sub.add_parser("extract", help="Extraer paginas de PDF")
@@ -44,6 +47,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_extract.add_argument("salida", help="PDF de salida")
     p_extract.add_argument("paginas", help="Rango: 1-3,5,7-9")
     p_extract.add_argument("-v", "--verbose", action="store_true")
+
+    p_merge = sub.add_parser("merge", help="Unir 2 o mas PDFs")
+    p_merge.add_argument("entradas", nargs="+", help="PDFs a unir (min 2)")
+    p_merge.add_argument("-o", "--output", default=defaults["pdf_merge_out"], help="Archivo PDF de salida")
+    p_merge.add_argument("-v", "--verbose", action="store_true")
 
     p_pdf2jpg = sub.add_parser("pdf2jpg", help="Convertir PDF(s) a JPG")
     p_pdf2jpg.add_argument("entrada", help="PDF o carpeta con PDFs")
@@ -92,6 +100,33 @@ def run_extract(args) -> int:
         print(f"✅ {result['message']}")
         print(f"📁 Archivo: {result['output_path']}")
         return 0
+    print(f"❌ Error: {result.get('error', 'desconocido')}")
+    return 1
+
+
+def run_merge(args) -> int:
+    try:
+        from src.services.pdf_merger import PDFMergerService
+    except ModuleNotFoundError as exc:
+        print(f"❌ Dependencia faltante: {exc}")
+        return 1
+
+    if len(args.entradas) < 2:
+        print("❌ Debes indicar al menos 2 PDFs")
+        return 1
+
+    if args.verbose:
+        print(f"📚 PDFs a unir: {len(args.entradas)}")
+        for item in args.entradas:
+            print(f"   - {item}")
+        print(f"📤 Salida: {args.output}")
+
+    result = PDFMergerService.merge_pdfs(args.entradas, args.output)
+    if result.get("success"):
+        print(f"✅ {result['message']}")
+        print(f"📁 Archivo: {result['output_path']}")
+        return 0
+
     print(f"❌ Error: {result.get('error', 'desconocido')}")
     return 1
 
@@ -212,6 +247,8 @@ def main() -> int:
 
     if args.command == "extract":
         return run_extract(args)
+    if args.command == "merge":
+        return run_merge(args)
     if args.command == "pdf2jpg":
         return run_pdf2jpg(args)
     if args.command == "img2pdf":

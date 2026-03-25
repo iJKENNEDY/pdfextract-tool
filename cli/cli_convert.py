@@ -7,8 +7,8 @@ import argparse
 import sys
 from pathlib import Path
 
-# Agregar src al path
-sys.path.insert(0, str(Path(__file__).parent))
+# Agregar raiz del proyecto al path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
 def create_parser():
@@ -23,7 +23,7 @@ def create_parser():
         description='Convertidor de PDF a JPG'
     )
     
-    parser.add_argument('entrada', nargs='?', default=str(Path(__file__).parent / 'data' / 'pdfs'),
+    parser.add_argument('entrada', nargs='?', default=str(Path(__file__).resolve().parent.parent / 'data' / 'pdfs'),
                        help='Ruta al archivo PDF o carpeta con PDFs')
     parser.add_argument('--output', '-o', default=str(IMAGE_OUTPUT_DIR),
                        help='Directorio de salida para las imágenes')
