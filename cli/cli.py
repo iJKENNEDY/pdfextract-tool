@@ -53,11 +53,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_merge.add_argument("-o", "--output", default=defaults["pdf_merge_out"], help="Archivo PDF de salida")
     p_merge.add_argument("-v", "--verbose", action="store_true")
 
-    p_pdf2jpg = sub.add_parser("pdf2jpg", help="Convertir PDF(s) a JPG")
+    p_pdf2jpg = sub.add_parser("pdf2jpg", help="Convertir PDF(s) a JPG/PNG")
     p_pdf2jpg.add_argument("entrada", help="PDF o carpeta con PDFs")
     p_pdf2jpg.add_argument("-o", "--output", default=defaults["img_out"], help="Directorio salida")
     p_pdf2jpg.add_argument("-z", "--zoom", type=float, default=defaults["zoom"], help="Zoom 1.0-4.0")
     p_pdf2jpg.add_argument("-q", "--quality", type=int, default=defaults["quality"], help="Calidad 1-100")
+    p_pdf2jpg.add_argument("-f", "--format", dest="output_format", default="jpg", choices=["jpg", "png"], help="Formato salida")
     p_pdf2jpg.add_argument("-r", "--range", dest="pages_range", default="", help="Rango de paginas")
     p_pdf2jpg.add_argument("-v", "--verbose", action="store_true")
 
@@ -150,6 +151,7 @@ def run_pdf2jpg(args) -> int:
             args.output,
             zoom=args.zoom,
             quality=args.quality,
+            output_format=args.output_format,
             pages_range=pages_range,
         )
     else:
@@ -160,6 +162,7 @@ def run_pdf2jpg(args) -> int:
             args.output,
             zoom=args.zoom,
             quality=args.quality,
+            output_format=args.output_format,
         )
 
     if result.get("success"):

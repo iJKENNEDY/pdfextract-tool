@@ -20,7 +20,7 @@ def create_parser():
         PDF_TO_JPG_CONFIG = {"zoom": 2.0, "quality": 95}
 
     parser = argparse.ArgumentParser(
-        description='Convertidor de PDF a JPG'
+        description='Convertidor de PDF a JPG/PNG'
     )
     
     parser.add_argument('entrada', nargs='?', default=str(Path(__file__).resolve().parent.parent / 'data' / 'pdfs'),
@@ -31,6 +31,8 @@ def create_parser():
                        help='Factor de zoom (1.0=72dpi, 2.0=144dpi, 3.0=216dpi)')
     parser.add_argument('--quality', '-q', type=int, default=PDF_TO_JPG_CONFIG['quality'],
                        help='Calidad JPG (1-100)')
+    parser.add_argument('--format', '-f', dest='output_format', default='jpg', choices=['jpg', 'png'],
+                       help='Formato de salida (jpg o png)')
     parser.add_argument('--verbose', '-v', action='store_true',
                        help='Mostrar información detallada')
     
@@ -58,7 +60,7 @@ def main():
     if args.verbose:
         print(f"📁 Entrada: {args.entrada}")
         print(f"📁 Salida: {args.output}")
-        print(f"🎨 Zoom: {args.zoom}x | Calidad: {args.quality}%")
+        print(f"🎨 Zoom: {args.zoom}x | Calidad: {args.quality}% | Formato: {args.output_format}")
         print()
     
     # Decidir si es archivo o carpeta
@@ -68,7 +70,8 @@ def main():
             str(input_path),
             args.output,
             zoom=args.zoom,
-            quality=args.quality
+            quality=args.quality,
+            output_format=args.output_format,
         )
         
         if result["success"]:
@@ -86,7 +89,8 @@ def main():
             str(input_path),
             args.output,
             zoom=args.zoom,
-            quality=args.quality
+            quality=args.quality,
+            output_format=args.output_format,
         )
         
         if result["success"]:

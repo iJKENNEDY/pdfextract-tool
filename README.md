@@ -23,7 +23,7 @@ Aplicación **GUI + CLI** para:
 
 PDF Extract Tool es una aplicación completa que proporciona múltiples interfaces (CLI y GUI) para:
 - **Extracción de páginas**: Extrae rangos específicos o páginas individuales de PDFs
-- **Conversión a imágenes**: Convierte páginas de PDF a JPG de alta calidad
+- **Conversión a imágenes**: Convierte páginas de PDF a JPG o PNG
 - **Unión de PDFs**: Une 2 o más archivos PDF en uno solo
 - **Conversión de imágenes a PDF**: Une una o varias imágenes en PDF
 - **Conversión de imágenes a otros formatos**: Convierte entre JPG, PNG, WEBP, AVIF, ICO, BMP, TIFF (según compatibilidad)
@@ -45,6 +45,7 @@ PDF Extract Tool es una aplicación completa que proporciona múltiples interfac
 🖼️ **Conversión de Alta Calidad**
 - Zoom configurable (72 DPI a 288 DPI)
 - Calidad JPG ajustable (1-100)
+- Formato seleccionable: JPG o PNG
 - Rango de páginas (por defecto todas)
 - Progreso visual de conversión
 
@@ -83,7 +84,7 @@ pdfextract/
 │   │   ├── __init__.py
 │   │   ├── pdf_extractor.py   # Extracción de páginas
 │   │   ├── pdf_merger.py      # Unión de múltiples PDFs
-│   │   ├── pdf_converter.py   # Conversión PDF a JPG
+│   │   ├── pdf_converter.py   # Conversión PDF a JPG/PNG
 │   │   ├── image_to_pdf_converter.py  # Conversión imágenes a PDF
 │   │   └── image_format_converter.py  # Conversión entre formatos de imagen
 │   ├── ui/              # Interfaces de usuario
@@ -96,7 +97,7 @@ pdfextract/
 ├── output/              # Archivos generados
 │   ├── pdfs_extraidos/  # PDFs procesados
 │   ├── pdf_unidos/       # PDFs unidos
-│   ├── imagenes_jpg/    # Imágenes convertidas
+│   ├── imagenes_jpg/    # Imágenes convertidas (JPG/PNG)
 │   ├── pdf_generados_desde_imagenes/  # PDFs generados desde imágenes
 │   └── imagenes_convertidas/  # Imágenes convertidas de formato
 ├── cli/
@@ -185,19 +186,22 @@ python cli/cli_extract.py input.pdf output.pdf "1-10" --verbose
 python cli/cli_extract.py --help
 ```
 
-### CLI - Conversión a JPG
+### CLI - Conversión a JPG/PNG
 
 Convierte PDFs a imágenes de alta calidad:
 
 ```bash
-# Convierte un PDF
+# Convierte un PDF a JPG (default)
 python cli/cli_convert.py archivo.pdf
+
+# Convierte un PDF a PNG
+python cli/cli_convert.py archivo.pdf --format png
 
 # Convierte todos los PDFs en una carpeta
 python cli/cli_convert.py ./pdfs --output ./imagenes --zoom 2.0 --quality 95
 
 # Con información detallada
-python cli/cli_convert.py ./pdfs -v
+python cli/cli_convert.py ./pdfs -v --format jpg
 
 # Ver ayuda
 python cli/cli_convert.py --help
@@ -233,7 +237,10 @@ python cli/cli.py extract input.pdf output.pdf "1-3,5"
 python cli/cli.py merge a.pdf b.pdf c.pdf --output unido.pdf
 
 # PDF a JPG
-python cli/cli.py pdf2jpg input.pdf --range "1-4" --zoom 2.0 --quality 95
+python cli/cli.py pdf2jpg input.pdf --range "1-4" --zoom 2.0 --quality 95 --format jpg
+
+# PDF a PNG
+python cli/cli.py pdf2jpg input.pdf --range "1-4" --zoom 2.0 --format png
 
 # Imágenes a PDF
 python cli/cli.py img2pdf ./imagenes --name "album" --range "1-10"

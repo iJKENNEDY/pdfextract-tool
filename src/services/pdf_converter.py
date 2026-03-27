@@ -12,6 +12,12 @@ from src.services.pdf_extractor import PageParser
 class PDFToImageConverter:
     """Servicio para convertir PDFs a imágenes JPG"""
 
+    FORMAT_MAP = {
+        "jpg": ("JPEG", ".jpg"),
+        "jpeg": ("JPEG", ".jpg"),
+        "png": ("PNG", ".png"),
+    }
+
     @staticmethod
     def _next_available_dir(base_dir: Path) -> Path:
         """Evita reemplazo de carpetas de salida."""
@@ -31,6 +37,7 @@ class PDFToImageConverter:
         output_dir: str,
         zoom: float = 2.0,
         quality: int = 95,
+        output_format: str = "jpg",
         pages_range: Optional[str] = None,
         progress_callback=None,
     ) -> Dict:
@@ -60,6 +67,12 @@ class PDFToImageConverter:
             if not (1 <= quality <= 100):
                 raise ValueError("Calidad debe estar entre 1 y 100")
             
+            # Validar formato de salida
+            format_key = output_format.strip().lower()
+            if format_key not in PDFToImageConverter.FORMAT_MAP:
+                raise ValueError("Formato no soportado. Usa: jpg o png")
+            pillow_format, extension = PDFToImageConverter.FORMAT_MAP[format_key]
+
             # Crear directorio de salida
             output_dir_obj.mkdir(parents=True, exist_ok=True)
             
@@ -101,11 +114,14 @@ class PDFToImageConverter:
                     img = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
                     
                     # Generar nombre de archivo
-                    output_name = f"{pdf_path_obj.stem}_pagina_{page_num:03d}.jpg"
+                    output_name = f"{pdf_path_obj.stem}_pagina_{page_num:03d}{extension}"
                     output_path = work_output_dir / output_name
                     
                     # Guardar imagen
-                    img.save(output_path, 'JPEG', quality=quality, optimize=True)
+                    save_kwargs = {"optimize": True}
+                    if pillow_format == "JPEG":
+                        save_kwargs["quality"] = quality
+                    img.save(output_path, pillow_format, **save_kwargs)
                     saved_pages += 1
                     if progress_callback:
                         progress_callback(idx, total_selected, output_name)
@@ -120,6 +136,7 @@ class PDFToImageConverter:
                 "total_pages": total_pages,
                 "selected_pages": total_selected,
                 "saved_pages": saved_pages,
+                "output_format": format_key,
                 "output_directory": str(work_output_dir),
                 "file_name": pdf_path_obj.name,
                 "errors": errors if errors else None,
@@ -138,7 +155,8 @@ class PDFToImageConverter:
         input_dir: str,
         output_dir: str,
         zoom: float = 2.0,
-        quality: int = 95
+        quality: int = 95,
+        output_format: str = "jpg",
     ) -> Dict:
         """
         Convierte todos los PDFs de una carpeta
@@ -179,6 +197,7 @@ class PDFToImageConverter:
                     str(pdf_output_dir),
                     zoom,
                     quality,
+                    output_format,
                 )
                 results.append(result)
                 

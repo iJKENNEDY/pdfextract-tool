@@ -320,12 +320,22 @@ class PDFToImageTab(BaseTab):
         self.zoom_label = ttk.Label(cfg, text="2.0x (144 DPI)")
         self.zoom_label.grid(row=1, column=2, sticky="w", padx=4)
 
-        ttk.Label(cfg, text="Calidad JPG:").grid(row=2, column=0, sticky="w", padx=4, pady=4)
+        ttk.Label(cfg, text="Formato salida:").grid(row=2, column=0, sticky="w", padx=4, pady=4)
+        self.output_format_var = tk.StringVar(value="jpg")
+        ttk.Combobox(
+            cfg,
+            textvariable=self.output_format_var,
+            state="readonly",
+            values=["jpg", "png"],
+            width=12,
+        ).grid(row=2, column=1, sticky="w", padx=4, pady=4)
+
+        ttk.Label(cfg, text="Calidad JPG:").grid(row=3, column=0, sticky="w", padx=4, pady=4)
         self.quality_var = tk.IntVar(value=95)
         quality = ttk.Scale(cfg, from_=50, to=100, variable=self.quality_var, command=self._refresh_quality)
-        quality.grid(row=2, column=1, sticky="ew", padx=4, pady=4)
+        quality.grid(row=3, column=1, sticky="ew", padx=4, pady=4)
         self.quality_label = ttk.Label(cfg, text="95%")
-        self.quality_label.grid(row=2, column=2, sticky="w", padx=4)
+        self.quality_label.grid(row=3, column=2, sticky="w", padx=4)
 
         cfg.columnconfigure(1, weight=1)
 
@@ -378,6 +388,7 @@ class PDFToImageTab(BaseTab):
             str(IMAGE_OUTPUT_DIR),
             zoom=float(self.zoom_var.get()),
             quality=int(float(self.quality_var.get())),
+            output_format=self.output_format_var.get(),
             pages_range=self.pages_var.get().strip() or None,
             progress_callback=self._on_progress,
         )
@@ -831,6 +842,7 @@ class PDFExtractToolApp(tk.Tk):
         footer = ttk.Frame(self)
         footer.grid(row=2, column=0, sticky="ew", padx=10, pady=(0, 8))
         ttk.Label(footer, text="v1.2", foreground="gray").pack(side="left")
+        ttk.Button(footer, text="🚪 Salir", command=self.destroy).pack(side="right", padx=(0, 6))
         ttk.Button(footer, text="ℹ️ Acerca de", command=self.show_about).pack(side="right")
 
     def show_about(self):
