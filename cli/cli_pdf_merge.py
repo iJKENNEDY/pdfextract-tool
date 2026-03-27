@@ -16,7 +16,7 @@ def create_parser():
 
     parser = argparse.ArgumentParser(description="Unir 2 o mas archivos PDF en uno")
     parser.add_argument("entradas", nargs="+", help="Lista de archivos PDF a unir (min 2)")
-    parser.add_argument("--output", "-o", default=str(PDF_MERGE_OUTPUT_DIR / "pdf_unido.pdf"), help="Ruta PDF de salida")
+    parser.add_argument("--output", "-o", default=str(PDF_MERGE_OUTPUT_DIR / "merge.pdf"), help="Ruta PDF de salida")
     parser.add_argument("--verbose", "-v", action="store_true", help="Mostrar detalle")
     return parser
 

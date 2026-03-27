@@ -9,12 +9,8 @@ from tkinter import filedialog, messagebox, ttk
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.config.settings import (
+    DEFAULT_OUTPUT_BASE_DIR,
     GUI_CONFIG,
-    IMAGE_CONVERT_OUTPUT_DIR,
-    IMAGE_OUTPUT_DIR,
-    IMAGE_TO_PDF_OUTPUT_DIR,
-    PDF_MERGE_OUTPUT_DIR,
-    PDF_OUTPUT_DIR,
 )
 from src.services.image_format_converter import SOURCE_EXTENSIONS, ImageFormatConverter
 from src.services.image_to_pdf_converter import IMAGE_EXTENSIONS, ImageToPDFConverter
@@ -67,6 +63,7 @@ class BaseTab(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent, style="Main.TFrame")
         self.status_var = tk.StringVar(value="Listo")
+        self.output_dir_var = tk.StringVar(value=str(DEFAULT_OUTPUT_BASE_DIR))
 
     def build_status_bar(self) -> None:
         status_bar = ttk.Label(self, textvariable=self.status_var, relief="sunken")
@@ -74,6 +71,46 @@ class BaseTab(ttk.Frame):
 
     def on_ui(self, callback):
         self.after(0, callback)
+
+    @staticmethod
+    def bytes_to_mb(size_bytes: int) -> float:
+        return float(size_bytes) / (1024.0 * 1024.0)
+
+    def open_output_dir(self, path_value: str):
+        try:
+            path_obj = Path(path_value)
+            if path_obj.is_file():
+                path_obj = path_obj.parent
+            path_obj.mkdir(parents=True, exist_ok=True)
+            if sys.platform.startswith("win"):
+                import os
+
+                os.startfile(str(path_obj))
+            elif sys.platform == "darwin":
+                import subprocess
+
+                subprocess.Popen(["open", str(path_obj)])
+            else:
+                import subprocess
+
+                subprocess.Popen(["xdg-open", str(path_obj)])
+        except Exception as exc:
+            messagebox.showerror("Error", f"No se pudo abrir el directorio:\n{exc}")
+
+    def get_output_subdir(self, subfolder: str) -> Path:
+        base = Path(self.output_dir_var.get()) if self.output_dir_var.get() else DEFAULT_OUTPUT_BASE_DIR
+        target = base / subfolder
+        target.mkdir(parents=True, exist_ok=True)
+        return target
+
+    def choose_output_base_dir(self):
+        selected = filedialog.askdirectory(
+            title="Selecciona directorio base de salida",
+            initialdir=self.output_dir_var.get() or str(DEFAULT_OUTPUT_BASE_DIR),
+        )
+        if selected:
+            self.output_dir_var.set(selected)
+            self.status_var.set(f"Output base: {selected}")
 
 
 class PDFExtractorTab(BaseTab):
@@ -106,6 +143,8 @@ class PDFExtractorTab(BaseTab):
         action_box.pack(fill="x", pady=8)
         ttk.Button(action_box, text="✂️ Extraer", command=self.extract_pages).pack(side="left", padx=4)
         ttk.Button(action_box, text="💾 Guardar como", command=self.save_as).pack(side="left", padx=4)
+        ttk.Button(action_box, text="📂 Abrir output", command=lambda: self.open_output_dir(str(self.get_output_subdir("pdfs_extraidos")))).pack(side="left", padx=4)
+        ttk.Button(action_box, text="🗂️ Cambiar output", command=self.choose_output_base_dir).pack(side="left", padx=4)
 
         self.build_status_bar()
 
@@ -117,7 +156,8 @@ class PDFExtractorTab(BaseTab):
         info = PDFExtractor.get_pdf_info(path)
         self.file_label.config(text=Path(path).name, foreground="black")
         if info.get("success"):
-            self.info_label.config(text=f"Paginas: {info['total_pages']} | Tamano: {info['file_size']} bytes")
+            size_mb = self.bytes_to_mb(info["file_size"])
+            self.info_label.config(text=f"Paginas: {info['total_pages']} | Tamano: {size_mb:.2f} MB")
             self.status_var.set("PDF cargado")
 
     def _run_extract(self, output_file: str):
@@ -142,7 +182,7 @@ class PDFExtractorTab(BaseTab):
         if not self.selected_file:
             messagebox.showwarning("Aviso", "Selecciona un PDF primero")
             return
-        out = PDF_OUTPUT_DIR / f"{Path(self.selected_file).stem}_extraido.pdf"
+        out = self.get_output_subdir("pdfs_extraidos") / "extract.pdf"
         self.status_var.set("Extrayendo...")
         threading.Thread(target=self._run_extract, args=(str(out),), daemon=True).start()
 
@@ -151,7 +191,7 @@ class PDFExtractorTab(BaseTab):
             messagebox.showwarning("Aviso", "Selecciona un PDF primero")
             return
         out = filedialog.asksaveasfilename(
-            initialdir=str(PDF_OUTPUT_DIR),
+            initialdir=str(self.get_output_subdir("pdfs_extraidos")),
             defaultextension=".pdf",
             filetypes=[("PDF", "*.pdf")],
         )
@@ -195,13 +235,15 @@ class PDFMergeTab(BaseTab):
 
         out_box = ttk.LabelFrame(main, text="💾 Salida", padding=12, style="Extract.TLabelframe")
         out_box.pack(fill="x", pady=8)
-        self.output_var = tk.StringVar(value=str(PDF_MERGE_OUTPUT_DIR / "pdf_unido.pdf"))
+        self.output_var = tk.StringVar(value=str(self.get_output_subdir("pdf_unidos") / "merge.pdf"))
         ttk.Entry(out_box, textvariable=self.output_var).pack(fill="x", pady=4)
         ttk.Button(out_box, text="📁 Elegir ruta", command=self.pick_output).pack(anchor="w", pady=4)
 
         action = ttk.Frame(main)
         action.pack(fill="x", pady=8)
         ttk.Button(action, text="🔗 Unir PDFs", command=self.merge).pack(side="left", padx=4)
+        ttk.Button(action, text="📂 Abrir output", command=lambda: self.open_output_dir(str(self.get_output_subdir("pdf_unidos")))).pack(side="left", padx=4)
+        ttk.Button(action, text="🗂️ Cambiar output", command=self.choose_output_base_dir).pack(side="left", padx=4)
 
         self.build_status_bar()
 
@@ -259,7 +301,7 @@ class PDFMergeTab(BaseTab):
     def pick_output(self):
         out = filedialog.asksaveasfilename(
             defaultextension=".pdf",
-            initialdir=str(PDF_MERGE_OUTPUT_DIR),
+            initialdir=str(self.get_output_subdir("pdf_unidos")),
             filetypes=[("PDF", "*.pdf")],
         )
         if out:
@@ -342,6 +384,8 @@ class PDFToImageTab(BaseTab):
         action = ttk.Frame(main)
         action.pack(fill="x", pady=8)
         ttk.Button(action, text="🖼️ Convertir a JPG", command=self.convert).pack(side="left", padx=4)
+        ttk.Button(action, text="📂 Abrir output", command=lambda: self.open_output_dir(str(self.get_output_subdir("imagenes")))).pack(side="left", padx=4)
+        ttk.Button(action, text="🗂️ Cambiar output", command=self.choose_output_base_dir).pack(side="left", padx=4)
 
         progress_box = ttk.LabelFrame(main, text="📊 Progreso", padding=12, style="PdfImg.TLabelframe")
         progress_box.pack(fill="x", pady=8)
@@ -367,7 +411,8 @@ class PDFToImageTab(BaseTab):
         self.file_label.config(text=Path(path).name, foreground="black")
         info = PDFExtractor.get_pdf_info(path)
         if info.get("success"):
-            self.info_label.config(text=f"Paginas: {info['total_pages']} | Tamano: {info['file_size']} bytes")
+            size_mb = self.bytes_to_mb(info["file_size"])
+            self.info_label.config(text=f"Paginas: {info['total_pages']} | Tamano: {size_mb:.2f} MB")
         self.status_var.set("PDF listo para convertir")
 
     def _on_progress(self, current: int, total: int, filename: str):
@@ -385,7 +430,7 @@ class PDFToImageTab(BaseTab):
 
         result = PDFToImageConverter.convert_pdf_to_jpg(
             pdf_file,
-            str(IMAGE_OUTPUT_DIR),
+            str(self.get_output_subdir("imagenes")),
             zoom=float(self.zoom_var.get()),
             quality=int(float(self.quality_var.get())),
             output_format=self.output_format_var.get(),
@@ -416,7 +461,7 @@ class PDFToImageTab(BaseTab):
 
 
 class ImageToPDFTab(BaseTab):
-    """Tab de imagenes a PDF, con cola y drag&drop."""
+    """Tab de imagenes a PDF (modo todo/individual y drag&drop)."""
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -456,7 +501,7 @@ class ImageToPDFTab(BaseTab):
         ttk.Entry(opt, textvariable=self.range_var).grid(row=0, column=1, sticky="ew", padx=4, pady=4)
 
         ttk.Label(opt, text="Nombre base PDF:").grid(row=1, column=0, sticky="w", padx=4, pady=4)
-        self.output_name_var = tk.StringVar(value="imagenes_convertidas")
+        self.output_name_var = tk.StringVar(value="img2pdf")
         ttk.Entry(opt, textvariable=self.output_name_var).grid(row=1, column=1, sticky="ew", padx=4, pady=4)
 
         ttk.Label(opt, text="Modo de conversion:").grid(row=2, column=0, sticky="w", padx=4, pady=4)
@@ -473,6 +518,8 @@ class ImageToPDFTab(BaseTab):
         action = ttk.Frame(main)
         action.pack(fill="x", pady=8)
         ttk.Button(action, text="🚀 Convertir", command=self.process_conversion).pack(side="left", padx=4)
+        ttk.Button(action, text="📂 Abrir output", command=lambda: self.open_output_dir(str(self.get_output_subdir("img2pdf")))).pack(side="left", padx=4)
+        ttk.Button(action, text="🗂️ Cambiar output", command=self.choose_output_base_dir).pack(side="left", padx=4)
 
         progress_box = ttk.LabelFrame(main, text="📊 Progreso", padding=12, style="ImgPdf.TLabelframe")
         progress_box.pack(fill="x", pady=8)
@@ -553,8 +600,8 @@ class ImageToPDFTab(BaseTab):
     def _process_all_images(self):
         result = ImageToPDFConverter.convert_images_to_pdf(
             image_paths=list(self.image_paths),
-            output_dir=str(IMAGE_TO_PDF_OUTPUT_DIR),
-            output_name=self.output_name_var.get().strip() or "imagenes_convertidas",
+            output_dir=str(self.get_output_subdir("img2pdf")),
+            output_name=self.output_name_var.get().strip() or "img2pdf",
             range_str=self.range_var.get().strip() or None,
             progress_callback=self._on_progress,
         )
@@ -585,7 +632,7 @@ class ImageToPDFTab(BaseTab):
 
             result = ImageToPDFConverter.convert_images_to_pdf(
                 image_paths=[image_path],
-                output_dir=str(IMAGE_TO_PDF_OUTPUT_DIR),
+                output_dir=str(self.get_output_subdir("img2pdf")),
                 output_name=output_name,
                 range_str="1",
             )
@@ -601,7 +648,7 @@ class ImageToPDFTab(BaseTab):
             self.status_var.set(f"Conversion individual completada: {success_count}/{total}")
             messagebox.showinfo(
                 "Completado",
-                f"PDFs generados: {success_count}/{total}\n\nSalida: {IMAGE_TO_PDF_OUTPUT_DIR}\n\n" + "\n".join(outputs[:10]),
+                f"PDFs generados: {success_count}/{total}\n\nSalida: {self.get_output_subdir('img2pdf')}\n\n" + "\n".join(outputs[:10]),
             )
 
         self.on_ui(_done)
@@ -620,7 +667,6 @@ class ImageToPDFTab(BaseTab):
             threading.Thread(target=self._process_individual_images, daemon=True).start()
         else:
             threading.Thread(target=self._process_all_images, daemon=True).start()
-
 
 class ImageFormatConvertTab(BaseTab):
     """Tab para convertir imagenes a otros formatos compatibles."""
@@ -674,6 +720,8 @@ class ImageFormatConvertTab(BaseTab):
         action = ttk.Frame(main)
         action.pack(fill="x", pady=8)
         ttk.Button(action, text="🎨 Convertir imagenes", command=self.convert).pack(side="left", padx=4)
+        ttk.Button(action, text="📂 Abrir output", command=lambda: self.open_output_dir(str(self.get_output_subdir("imgfmt")))).pack(side="left", padx=4)
+        ttk.Button(action, text="🗂️ Cambiar output", command=self.choose_output_base_dir).pack(side="left", padx=4)
 
         progress_box = ttk.LabelFrame(main, text="📊 Progreso", padding=12, style="ImgFmt.TLabelframe")
         progress_box.pack(fill="x", pady=8)
@@ -763,7 +811,7 @@ class ImageFormatConvertTab(BaseTab):
     def _worker(self):
         result = ImageFormatConverter.convert_images(
             image_paths=self.image_paths,
-            output_dir=str(IMAGE_CONVERT_OUTPUT_DIR),
+            output_dir=str(self.get_output_subdir("imgfmt")),
             target_format=self.target_var.get(),
             quality=int(float(self.quality_var.get())),
             progress_callback=self._on_progress,
@@ -800,6 +848,36 @@ class PDFExtractToolApp(tk.Tk):
         self.geometry(f"{GUI_CONFIG['window_width']}x{GUI_CONFIG['window_height']}")
         self.minsize(860, 620)
         self._setup_window_icon()
+        self._show_loading_screen()
+        self.after(700, self._finish_startup)
+
+    def _show_loading_screen(self):
+        """Pantalla inicial de carga."""
+        loading_frame = ttk.Frame(self, padding=24)
+        loading_frame.pack(fill="both", expand=True)
+
+        ttk.Label(
+            loading_frame,
+            text="⏳ Cargando PDF Extract Tool...",
+            font=("Segoe UI", 13, "bold"),
+        ).pack(pady=(30, 12))
+
+        progress = ttk.Progressbar(loading_frame, mode="indeterminate", length=320)
+        progress.pack(pady=10)
+        progress.start(12)
+
+        ttk.Label(
+            loading_frame,
+            text="Inicializando modulos y recursos...",
+            foreground="#666",
+        ).pack(pady=(8, 0))
+
+        self.update_idletasks()
+
+    def _finish_startup(self):
+        """Finaliza inicializacion y monta la UI principal."""
+        for child in self.winfo_children():
+            child.destroy()
         ModernStyle.configure_styles()
         self.setup_ui()
 
@@ -852,7 +930,7 @@ class PDFExtractToolApp(tk.Tk):
             "- Extrae paginas de PDF\n"
             "- Une multiples PDFs en un solo archivo\n"
             "- Convierte PDF a JPG con rango y progreso\n"
-            "- Convierte imagenes a PDF (cola, drag&drop, rango, no sobrescribe)\n"
+            "- Convierte imagenes a PDF (modo todo/individual, drag&drop, rango, no sobrescribe)\n"
             "- Convierte imagenes entre formatos (jpg/png/webp/avif/ico/etc)",
         )
 

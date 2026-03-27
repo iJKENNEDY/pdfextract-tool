@@ -114,7 +114,7 @@ class PDFToImageConverter:
                     img = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
                     
                     # Generar nombre de archivo
-                    output_name = f"{pdf_path_obj.stem}_pagina_{page_num:03d}{extension}"
+                    output_name = f"pg_{page_num:03d}{extension}"
                     output_path = work_output_dir / output_name
                     
                     # Guardar imagen

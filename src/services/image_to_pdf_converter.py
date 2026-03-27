@@ -94,7 +94,7 @@ class ImageToPDFConverter:
 
             output_dir_path = Path(output_dir)
             output_dir_path.mkdir(parents=True, exist_ok=True)
-            safe_base = output_name.strip() if output_name and output_name.strip() else "imagenes_convertidas"
+            safe_base = output_name.strip() if output_name and output_name.strip() else "img2pdf"
             output_path = ImageToPDFConverter._unique_output_path(output_dir_path, safe_base)
 
             converted_images: List[Image.Image] = []

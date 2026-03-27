@@ -7,6 +7,8 @@ __all__ = [
     'LEGACY_PDF_DIR',
     'LEGACY_IMG_DIR',
     'DATA_DIR',
+    'DOCUMENTS_DIR',
+    'DEFAULT_OUTPUT_BASE_DIR',
     'OUTPUT_DIR',
     'PDF_INPUT_DIR',
     'IMAGE_OUTPUT_DIR',

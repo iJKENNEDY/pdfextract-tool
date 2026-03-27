@@ -22,7 +22,7 @@ def _load_defaults():
             "img_out": str(IMAGE_OUTPUT_DIR),
             "img2pdf_out": str(IMAGE_TO_PDF_OUTPUT_DIR),
             "img_convert_out": str(IMAGE_CONVERT_OUTPUT_DIR),
-            "pdf_merge_out": str(PDF_MERGE_OUTPUT_DIR / "pdf_unido.pdf"),
+            "pdf_merge_out": str(PDF_MERGE_OUTPUT_DIR / "merge.pdf"),
             "zoom": PDF_TO_JPG_CONFIG.get("zoom", 2.0),
             "quality": PDF_TO_JPG_CONFIG.get("quality", 95),
         }
@@ -31,7 +31,7 @@ def _load_defaults():
             "img_out": "output/imagenes_jpg",
             "img2pdf_out": "output/pdf_generados_desde_imagenes",
             "img_convert_out": "output/imagenes_convertidas",
-            "pdf_merge_out": "output/pdf_unidos/pdf_unido.pdf",
+            "pdf_merge_out": "output/pdf_unidos/merge.pdf",
             "zoom": 2.0,
             "quality": 95,
         }
@@ -65,7 +65,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_img2pdf = sub.add_parser("img2pdf", help="Convertir imagen(es) a PDF")
     p_img2pdf.add_argument("entradas", nargs="+", help="Imagenes o carpetas")
     p_img2pdf.add_argument("-o", "--output", default=defaults["img2pdf_out"], help="Directorio salida")
-    p_img2pdf.add_argument("-n", "--name", default="imagenes_convertidas", help="Nombre base del PDF")
+    p_img2pdf.add_argument("-n", "--name", default="img2pdf", help="Nombre base del PDF")
     p_img2pdf.add_argument("-r", "--range", dest="range_str", default="", help="Rango de hojas")
     p_img2pdf.add_argument("-v", "--verbose", action="store_true")
 

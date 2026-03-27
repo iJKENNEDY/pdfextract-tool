@@ -11,7 +11,11 @@ LEGACY_PDF_DIR = PROJECT_ROOT / "pdfs"
 LEGACY_IMG_DIR = PROJECT_ROOT / "imagenes_jpg"
 
 DATA_DIR = PROJECT_ROOT / "data"
-OUTPUT_DIR = PROJECT_ROOT / "output"
+
+# Base de salida por defecto en Documentos del usuario
+DOCUMENTS_DIR = Path.home() / "Documents"
+DEFAULT_OUTPUT_BASE_DIR = DOCUMENTS_DIR / "pdfsExtractTool"
+OUTPUT_DIR = DEFAULT_OUTPUT_BASE_DIR
 
 # Directorios de entrada/salida
 PDF_INPUT_DIR = LEGACY_PDF_DIR if LEGACY_PDF_DIR.exists() else DATA_DIR / "pdfs"
@@ -23,6 +27,7 @@ PDF_MERGE_OUTPUT_DIR = OUTPUT_DIR / "pdf_unidos"
 
 # Crear directorios si no existen
 for directory in [
+    DEFAULT_OUTPUT_BASE_DIR,
     DATA_DIR,
     PDF_INPUT_DIR,
     OUTPUT_DIR,

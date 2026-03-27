@@ -19,6 +19,12 @@ Aplicación **GUI + CLI** para:
 
 ![Captura de la app](screenshot.png)
 
+## Salida por defecto
+
+- Por defecto, los archivos generados se guardan en: `~/Documents/pdfsExtractTool`
+- Desde la UI puedes cambiar el directorio base de salida con el botón `🗂️ Cambiar output`
+- También puedes abrir rápidamente la carpeta de resultados con `📂 Abrir output`
+
 ## Descripción General
 
 PDF Extract Tool es una aplicación completa que proporciona múltiples interfaces (CLI y GUI) para:
@@ -213,7 +219,7 @@ Convierte una o varias imágenes (o carpetas de imágenes) a un PDF:
 
 ```bash
 # Convertir imágenes sueltas
-python cli/cli_images_to_pdf.py foto1.jpg foto2.png --name "album"
+python cli/cli_images_to_pdf.py foto1.jpg foto2.png --name "img2pdf"
 
 # Convertir desde carpeta
 python cli/cli_images_to_pdf.py ./imagenes --output ./output/pdfs
@@ -234,7 +240,7 @@ Una sola entrada para todos los flujos:
 python cli/cli.py extract input.pdf output.pdf "1-3,5"
 
 # Unir PDFs
-python cli/cli.py merge a.pdf b.pdf c.pdf --output unido.pdf
+python cli/cli.py merge a.pdf b.pdf c.pdf --output merge.pdf
 
 # PDF a JPG
 python cli/cli.py pdf2jpg input.pdf --range "1-4" --zoom 2.0 --quality 95 --format jpg
@@ -243,7 +249,7 @@ python cli/cli.py pdf2jpg input.pdf --range "1-4" --zoom 2.0 --quality 95 --form
 python cli/cli.py pdf2jpg input.pdf --range "1-4" --zoom 2.0 --format png
 
 # Imágenes a PDF
-python cli/cli.py img2pdf ./imagenes --name "album" --range "1-10"
+python cli/cli.py img2pdf ./imagenes --name "img2pdf" --range "1-10"
 
 # Imágenes a otro formato
 python cli/cli.py imgconvert ./imagenes --to webp --quality 90

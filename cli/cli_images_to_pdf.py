@@ -32,7 +32,7 @@ def create_parser():
     parser.add_argument(
         "--name",
         "-n",
-        default="imagenes_convertidas",
+        default="img2pdf",
         help="Nombre base del PDF de salida",
     )
     parser.add_argument(
