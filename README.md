@@ -33,6 +33,7 @@ PDF Extract Tool es una aplicación completa que proporciona múltiples interfac
 - **Unión de PDFs**: Une 2 o más archivos PDF en uno solo
 - **Conversión de imágenes a PDF**: Une una o varias imágenes en PDF
 - **Conversión de imágenes a otros formatos**: Convierte entre JPG, PNG, WEBP, AVIF, ICO, BMP, TIFF (según compatibilidad)
+- **Scanner de imágenes**: Mejora certificados/documentos en grises y exporta a PDF/JPG
 - **Procesamiento por lotes**: Procesa múltiples archivos simultáneamente
 
 ## Características Principales
@@ -68,6 +69,12 @@ PDF Extract Tool es una aplicación completa que proporciona múltiples interfac
 - Respeta compatibilidad real de Pillow y codecs instalados
 - Muestra progreso y resumen de salida
 
+🧾 **Scanner de Certificados / Documentos**
+- Mejora imagen a escala de grises tipo documento
+- Ajuste de contraste y nitidez
+- Salida en PDF o JPG
+- Útil para certificados, recibos, documentos fotografiados
+
 🎯 **Múltiples Interfaces**
 - **GUI**: Interfaz gráfica moderna con Tkinter
 - **CLI**: Herramientas de línea de comandos para automatización
@@ -93,6 +100,7 @@ pdfextract/
 │   │   ├── pdf_converter.py   # Conversión PDF a JPG/PNG
 │   │   ├── image_to_pdf_converter.py  # Conversión imágenes a PDF
 │   │   └── image_format_converter.py  # Conversión entre formatos de imagen
+│   │   └── image_scanner.py  # Mejora tipo scanner y salida PDF/JPG
 │   ├── ui/              # Interfaces de usuario
 │   │   ├── __init__.py
 │   │   └── gui_main.py  # GUI principal con Tkinter
@@ -172,8 +180,9 @@ python gui_main.py
 **Características:**
 - ✂️ Extractor de páginas con vista previa de información
 - 🖼️ Conversor de PDF a JPG con control de zoom/calidad, rango y progreso
-- 🧩 Conversor de imágenes a PDF con cola y mensajes de salida
+- 🧩 Conversor de imágenes a PDF (modo todo/individual) con mensajes de salida
 - 🖌️ Conversor de imágenes a otros formatos compatibles
+- 🧾 Scanner de certificados/documentos (grises + mejora)
 - 📊 Status bar en tiempo real
 - 🎨 Tema moderno y colores coherentes
 

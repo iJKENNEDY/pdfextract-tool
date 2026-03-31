@@ -24,6 +24,7 @@ PDF_OUTPUT_DIR = OUTPUT_DIR / "pdfs_extraidos"
 IMAGE_TO_PDF_OUTPUT_DIR = OUTPUT_DIR / "pdf_generados_desde_imagenes"
 IMAGE_CONVERT_OUTPUT_DIR = OUTPUT_DIR / "imagenes_convertidas"
 PDF_MERGE_OUTPUT_DIR = OUTPUT_DIR / "pdf_unidos"
+SCAN_OUTPUT_DIR = OUTPUT_DIR / "scanner"
 
 # Crear directorios si no existen
 for directory in [
@@ -36,6 +37,7 @@ for directory in [
     IMAGE_TO_PDF_OUTPUT_DIR,
     IMAGE_CONVERT_OUTPUT_DIR,
     PDF_MERGE_OUTPUT_DIR,
+    SCAN_OUTPUT_DIR,
 ]:
     directory.mkdir(parents=True, exist_ok=True)
 

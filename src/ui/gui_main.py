@@ -13,6 +13,7 @@ from src.config.settings import (
     GUI_CONFIG,
 )
 from src.services.image_format_converter import SOURCE_EXTENSIONS, ImageFormatConverter
+from src.services.image_scanner import ImageScannerService
 from src.services.image_to_pdf_converter import IMAGE_EXTENSIONS, ImageToPDFConverter
 from src.services.pdf_converter import PDFToImageConverter
 from src.services.pdf_extractor import PDFExtractor
@@ -49,6 +50,7 @@ class ModernStyle:
             "PdfImg": ("#EAFBF3", "#2C6B4F"),
             "ImgPdf": ("#FFF4E8", "#8A4F20"),
             "ImgFmt": ("#F3ECFF", "#5A3E8E"),
+            "Scan": ("#FFF8E7", "#7A5B1D"),
         }
         for prefix, (bg, fg) in section_styles.items():
             style.configure(f"{prefix}.TLabelframe", background=bg, borderwidth=1)
@@ -839,6 +841,149 @@ class ImageFormatConvertTab(BaseTab):
         threading.Thread(target=self._worker, daemon=True).start()
 
 
+class ScanTab(BaseTab):
+    """Tab para escanear/mejorar imagenes de certificados/documentos."""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.image_paths = []
+        self.setup_ui()
+
+    def setup_ui(self):
+        main = ttk.Frame(self, style="Scan.TFrame")
+        main.pack(fill="both", expand=True, padx=16, pady=16)
+
+        in_box = ttk.LabelFrame(main, text="📄 Entrada (certificados / documentos)", padding=12, style="Scan.TLabelframe")
+        in_box.pack(fill="both", expand=True, pady=8)
+
+        ctrl = ttk.Frame(in_box)
+        ctrl.pack(fill="x", pady=4)
+        ttk.Button(ctrl, text="➕ Agregar imagenes", command=self.add_images).pack(side="left", padx=4)
+        ttk.Button(ctrl, text="📂 Agregar carpeta", command=self.add_folder).pack(side="left", padx=4)
+        ttk.Button(ctrl, text="🧹 Limpiar", command=self.clear_images).pack(side="left", padx=4)
+
+        self.listbox = tk.Listbox(in_box, height=8)
+        self.listbox.pack(fill="both", expand=True, padx=4, pady=4)
+
+        opt = ttk.LabelFrame(main, text="⚙️ Escaneo", padding=12, style="Scan.TLabelframe")
+        opt.pack(fill="x", pady=8)
+
+        ttk.Label(opt, text="Salida:").grid(row=0, column=0, sticky="w", padx=4, pady=4)
+        self.scan_format_var = tk.StringVar(value="pdf")
+        ttk.Combobox(opt, textvariable=self.scan_format_var, state="readonly", values=["pdf", "jpg"], width=10).grid(
+            row=0, column=1, sticky="w", padx=4, pady=4
+        )
+
+        ttk.Label(opt, text="Nombre base:").grid(row=1, column=0, sticky="w", padx=4, pady=4)
+        self.scan_name_var = tk.StringVar(value="scan")
+        ttk.Entry(opt, textvariable=self.scan_name_var).grid(row=1, column=1, sticky="ew", padx=4, pady=4)
+
+        ttk.Label(opt, text="Calidad JPG:").grid(row=2, column=0, sticky="w", padx=4, pady=4)
+        self.scan_quality_var = tk.IntVar(value=95)
+        ttk.Scale(opt, from_=1, to=100, variable=self.scan_quality_var).grid(row=2, column=1, sticky="ew", padx=4, pady=4)
+
+        ttk.Label(opt, text="Contraste:").grid(row=3, column=0, sticky="w", padx=4, pady=4)
+        self.scan_contrast_var = tk.DoubleVar(value=1.6)
+        ttk.Scale(opt, from_=1.0, to=3.0, variable=self.scan_contrast_var).grid(row=3, column=1, sticky="ew", padx=4, pady=4)
+
+        ttk.Label(opt, text="Nitidez:").grid(row=4, column=0, sticky="w", padx=4, pady=4)
+        self.scan_sharpness_var = tk.DoubleVar(value=1.8)
+        ttk.Scale(opt, from_=1.0, to=3.0, variable=self.scan_sharpness_var).grid(row=4, column=1, sticky="ew", padx=4, pady=4)
+
+        opt.columnconfigure(1, weight=1)
+
+        action = ttk.Frame(main)
+        action.pack(fill="x", pady=8)
+        ttk.Button(action, text="🧾 Escanear", command=self.scan).pack(side="left", padx=4)
+        ttk.Button(action, text="📂 Abrir output", command=lambda: self.open_output_dir(str(self.get_output_subdir("scanner")))).pack(side="left", padx=4)
+        ttk.Button(action, text="🗂️ Cambiar output", command=self.choose_output_base_dir).pack(side="left", padx=4)
+
+        progress_box = ttk.LabelFrame(main, text="📊 Progreso", padding=12, style="Scan.TLabelframe")
+        progress_box.pack(fill="x", pady=8)
+        self.progress = ttk.Progressbar(progress_box, mode="determinate")
+        self.progress.pack(fill="x", padx=4, pady=4)
+        self.progress_label = ttk.Label(progress_box, text="Sin proceso")
+        self.progress_label.pack(anchor="w", padx=4)
+
+        self.build_status_bar()
+
+    def _refresh_list(self):
+        self.listbox.delete(0, tk.END)
+        for idx, item in enumerate(self.image_paths, start=1):
+            self.listbox.insert(tk.END, f"{idx:03d}. {Path(item).name}")
+        self.status_var.set(f"Imagenes cargadas: {len(self.image_paths)}")
+
+    def add_images(self):
+        paths = filedialog.askopenfilenames(
+            title="Selecciona imagenes",
+            filetypes=[("Imagenes", "*.jpg *.jpeg *.png *.bmp *.tif *.tiff *.webp")],
+        )
+        for p in paths:
+            if p not in self.image_paths:
+                self.image_paths.append(p)
+        self._refresh_list()
+
+    def add_folder(self):
+        folder = filedialog.askdirectory(title="Selecciona carpeta con imagenes")
+        if not folder:
+            return
+        try:
+            found = ImageScannerService.list_images_from_path(folder)
+            for path_obj in found:
+                p = str(path_obj)
+                if p not in self.image_paths:
+                    self.image_paths.append(p)
+            self._refresh_list()
+        except Exception as exc:
+            messagebox.showerror("Error", str(exc))
+
+    def clear_images(self):
+        self.image_paths = []
+        self._refresh_list()
+
+    def _on_progress(self, current: int, total: int, filename: str):
+        def _ui():
+            self.progress.configure(maximum=max(total, 1), value=current)
+            self.progress_label.config(text=f"{current}/{total} - {filename}")
+            self.status_var.set(f"Escaneando... {current}/{total}")
+
+        self.on_ui(_ui)
+
+    def _worker(self):
+        result = ImageScannerService.scan_images(
+            image_paths=self.image_paths,
+            output_dir=str(self.get_output_subdir("scanner")),
+            output_format=self.scan_format_var.get(),
+            output_name=self.scan_name_var.get().strip() or "scan",
+            quality=int(float(self.scan_quality_var.get())),
+            contrast=float(self.scan_contrast_var.get()),
+            sharpness=float(self.scan_sharpness_var.get()),
+            progress_callback=self._on_progress,
+        )
+
+        if result.get("success"):
+            def _ok():
+                self.status_var.set(result["message"])
+                self.progress_label.config(text="Proceso finalizado")
+                out_preview = "\n".join(result.get("outputs", [])[:8])
+                messagebox.showinfo(
+                    "Completado",
+                    f"{result['message']}\n\nSalida: {result['output_directory']}\n\n{out_preview}",
+                )
+
+            self.on_ui(_ok)
+        else:
+            self.on_ui(lambda: messagebox.showerror("Error", result.get("error", "Error desconocido")))
+
+    def scan(self):
+        if not self.image_paths:
+            messagebox.showwarning("Aviso", "No hay imagenes para escanear")
+            return
+        self.progress.configure(value=0)
+        self.progress_label.config(text="Iniciando...")
+        threading.Thread(target=self._worker, daemon=True).start()
+
+
 class PDFExtractToolApp(tk.Tk):
     """Aplicacion principal."""
 
@@ -901,7 +1046,7 @@ class PDFExtractToolApp(tk.Tk):
         header.grid(row=0, column=0, sticky="nsew")
         header.grid_propagate(False)
         ttk.Label(header, text="📚 PDF Extract Tool", style="Title.TLabel").pack(anchor="center", pady=(12, 2))
-        ttk.Label(header, text="✂️ Extraer | 🔗 Unir PDFs | 🖼️ PDF->JPG | 🧩 Imagen->PDF | 🎨 Imagen->Imagen", style="Header.TLabel").pack(anchor="center")
+        ttk.Label(header, text="✂️ Extraer | 🔗 Unir PDFs | 🖼️ PDF->JPG | 🧩 Imagen->PDF | 🎨 Imagen->Imagen | 🧾 Scan", style="Header.TLabel").pack(anchor="center")
 
         container = ttk.Frame(self, style="Main.TFrame")
         container.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
@@ -916,6 +1061,7 @@ class PDFExtractToolApp(tk.Tk):
         notebook.add(PDFToImageTab(notebook), text="🖼️ PDF a JPG")
         notebook.add(ImageToPDFTab(notebook), text="🧩 Imagenes a PDF")
         notebook.add(ImageFormatConvertTab(notebook), text="🎨 Imagen a formato")
+        notebook.add(ScanTab(notebook), text="🧾 Scanner")
 
         footer = ttk.Frame(self)
         footer.grid(row=2, column=0, sticky="ew", padx=10, pady=(0, 8))
@@ -931,7 +1077,8 @@ class PDFExtractToolApp(tk.Tk):
             "- Une multiples PDFs en un solo archivo\n"
             "- Convierte PDF a JPG con rango y progreso\n"
             "- Convierte imagenes a PDF (modo todo/individual, drag&drop, rango, no sobrescribe)\n"
-            "- Convierte imagenes entre formatos (jpg/png/webp/avif/ico/etc)",
+            "- Convierte imagenes entre formatos (jpg/png/webp/avif/ico/etc)\n"
+            "- Escanea imagenes/certificados en grises y exporta a PDF o JPG",
         )
 
 
