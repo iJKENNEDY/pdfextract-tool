@@ -1,5 +1,6 @@
 """Servicio para convertir imagenes entre formatos compatibles."""
 
+from io import BytesIO
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -17,7 +18,7 @@ SUPPORTED_TARGETS = {
     "avif": "AVIF",
 }
 
-SOURCE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff", ".ico", ".avif"}
+SOURCE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff", ".ico", ".avif", ".svg"}
 
 
 class ImageFormatConverter:
@@ -74,6 +75,21 @@ class ImageFormatConverter:
         return img.copy()
 
     @staticmethod
+    def _open_image(path_obj: Path) -> Image.Image:
+        if path_obj.suffix.lower() != ".svg":
+            return Image.open(path_obj)
+
+        try:
+            import cairosvg
+        except ImportError as exc:
+            raise ImportError("Para convertir SVG instala la dependencia 'cairosvg'.") from exc
+
+        png_bytes = cairosvg.svg2png(url=str(path_obj))
+        with Image.open(BytesIO(png_bytes)) as img:
+            img.load()
+            return img.copy()
+
+    @staticmethod
     def convert_images(
         image_paths: List[str],
         output_dir: str,
@@ -104,7 +120,8 @@ class ImageFormatConverter:
                     out_name = f"{src.stem}.{target_ext}"
                     out_path = ImageFormatConverter._next_available_file(output_dir_obj / out_name)
 
-                    with Image.open(src) as im:
+                    im = ImageFormatConverter._open_image(src)
+                    try:
                         prepared = ImageFormatConverter._prepare_image_for_target(im, target_pillow)
                         save_kwargs = {}
                         if target_pillow in {"JPEG", "WEBP", "AVIF"}:
@@ -114,6 +131,8 @@ class ImageFormatConverter:
 
                         prepared.save(out_path, target_pillow, **save_kwargs)
                         prepared.close()
+                    finally:
+                        im.close()
 
                     outputs.append(str(out_path))
                     converted += 1

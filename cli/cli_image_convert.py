@@ -14,7 +14,7 @@ def create_parser():
     except ModuleNotFoundError:
         IMAGE_CONVERT_OUTPUT_DIR = Path("output") / "imagenes_convertidas"
 
-    parser = argparse.ArgumentParser(description="Convertir imagenes a otro formato")
+    parser = argparse.ArgumentParser(description="Convertir imagenes (incluye SVG) a otro formato")
     parser.add_argument("entradas", nargs="+", help="Archivos o carpetas de imagenes")
     parser.add_argument("--to", "-t", required=True, help="Formato destino: jpg,png,webp,avif,ico,bmp,tiff")
     parser.add_argument("--output", "-o", default=str(IMAGE_CONVERT_OUTPUT_DIR), help="Directorio salida")

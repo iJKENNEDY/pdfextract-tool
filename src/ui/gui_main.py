@@ -778,7 +778,7 @@ class ImageFormatConvertTab(BaseTab):
     def add_images(self):
         paths = filedialog.askopenfilenames(
             title="Selecciona imagenes",
-            filetypes=[("Imagenes", "*.jpg *.jpeg *.png *.webp *.bmp *.tif *.tiff *.ico *.avif")],
+            filetypes=[("Imagenes", "*.jpg *.jpeg *.png *.webp *.bmp *.tif *.tiff *.ico *.avif *.svg")],
         )
         for p in paths:
             if p not in self.image_paths:
