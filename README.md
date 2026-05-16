@@ -32,7 +32,7 @@ PDF Extract Tool es una aplicación completa que proporciona múltiples interfac
 - **Conversión a imágenes**: Convierte páginas de PDF a JPG o PNG
 - **Unión de PDFs**: Une 2 o más archivos PDF en uno solo
 - **Conversión de imágenes a PDF**: Une una o varias imágenes en PDF
-- **Conversión de imágenes a otros formatos**: Convierte entre JPG, PNG, WEBP, AVIF, ICO, BMP, TIFF, SVG (según compatibilidad)
+- **Conversión de imágenes a otros formatos**: Convierte entre JPG, PNG, WEBP, AVIF, ICO, BMP, TIFF y permite SVG como entrada (según compatibilidad)
 - **Scanner de imágenes**: Mejora certificados/documentos en grises y exporta a PDF/JPG
 - **Procesamiento por lotes**: Procesa múltiples archivos simultáneamente
 
@@ -65,7 +65,8 @@ PDF Extract Tool es una aplicación completa que proporciona múltiples interfac
 
 🖌️ **Imágenes a Otros Formatos**
 - Convierte imágenes sueltas o carpetas completas
-- Soporta formatos comunes: `jpg`, `png`, `webp`, `avif`, `ico`, `bmp`, `tiff`, `svg`
+- Soporta formatos comunes: `jpg`, `png`, `webp`, `avif`, `ico`, `bmp`, `tiff`
+- Acepta `svg` como entrada cuando está instalado `CairoSVG`
 - Respeta compatibilidad real de Pillow y codecs instalados
 - Muestra progreso y resumen de salida
 
@@ -131,9 +132,11 @@ pdfextract/
 - PyPDF2 (extracción de PDF)
 - PyMuPDF/fitz (conversión a imagen)
 - Pillow (procesamiento de imágenes)
+- CairoSVG (solo si quieres convertir SVG)
 - Tkinter (interfaz gráfica - incluida con Python)
 
 > Nota: para algunos formatos (ej. AVIF) se requiere que Pillow esté compilado con soporte del codec correspondiente.
+> Nota: SVG se convierte a un formato intermedio usando CairoSVG antes de pasar por Pillow.
 
 ## Instalación
 
