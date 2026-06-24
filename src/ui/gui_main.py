@@ -58,6 +58,29 @@ class ModernStyle:
             style.configure(f"{prefix}.TFrame", background=bg)
             style.configure(f"{prefix}.TLabel", background=bg, foreground=fg)
 
+        # Botones diferenciados por tonalidad
+        button_styles = {
+            "Primary": (GUI_CONFIG["theme_secondary"], "white"),
+            "Secondary": ("#6c757d", "white"),
+            "Success": (GUI_CONFIG["theme_success"], "white"),
+            "Danger": (GUI_CONFIG["theme_danger"], "white"),
+        }
+        for name, (bg, fg) in button_styles.items():
+            style.configure(
+                f"{name}.TButton",
+                background=bg,
+                foreground=fg,
+                font=GUI_CONFIG["font_button"],
+                padding=(12, 7),
+                borderwidth=0,
+                focusthickness=0,
+            )
+            style.map(
+                f"{name}.TButton",
+                background=[("active", bg), ("pressed", bg)],
+                foreground=[("disabled", "#d0d0d0")],
+            )
+
 
 class BaseTab(ttk.Frame):
     """Base comun para tabs con status y safe-ui-update."""
@@ -133,7 +156,7 @@ class PDFExtractorTab(BaseTab):
         self.file_label.pack(anchor="w", pady=4)
         self.info_label = ttk.Label(file_box, text="", foreground="#555", style="Extract.TLabel")
         self.info_label.pack(anchor="w", pady=2)
-        ttk.Button(file_box, text="📁 Seleccionar PDF", command=self.select_file).pack(anchor="w", pady=6)
+        ttk.Button(file_box, text="📁 Seleccionar PDF", command=self.select_file, style="Secondary.TButton").pack(anchor="w", pady=6)
 
         pages_box = ttk.LabelFrame(main, text="🔢 Rango de paginas", padding=12, style="Extract.TLabelframe")
         pages_box.pack(fill="x", pady=8)
@@ -143,10 +166,10 @@ class PDFExtractorTab(BaseTab):
 
         action_box = ttk.Frame(main)
         action_box.pack(fill="x", pady=8)
-        ttk.Button(action_box, text="✂️ Extraer", command=self.extract_pages).pack(side="left", padx=4)
-        ttk.Button(action_box, text="💾 Guardar como", command=self.save_as).pack(side="left", padx=4)
-        ttk.Button(action_box, text="📂 Abrir output", command=lambda: self.open_output_dir(str(self.get_output_subdir("pdfs_extraidos")))).pack(side="left", padx=4)
-        ttk.Button(action_box, text="🗂️ Cambiar output", command=self.choose_output_base_dir).pack(side="left", padx=4)
+        ttk.Button(action_box, text="✂️ Extraer", command=self.extract_pages, style="Primary.TButton").pack(side="left", padx=4)
+        ttk.Button(action_box, text="💾 Guardar como", command=self.save_as, style="Success.TButton").pack(side="left", padx=4)
+        ttk.Button(action_box, text="📂 Abrir output", command=lambda: self.open_output_dir(str(self.get_output_subdir("pdfs_extraidos"))), style="Secondary.TButton").pack(side="left", padx=4)
+        ttk.Button(action_box, text="🗂️ Cambiar output", command=self.choose_output_base_dir, style="Secondary.TButton").pack(side="left", padx=4)
 
         self.build_status_bar()
 
@@ -220,11 +243,11 @@ class PDFMergeTab(BaseTab):
 
         ctrl = ttk.Frame(in_box)
         ctrl.pack(fill="x", pady=4)
-        ttk.Button(ctrl, text="➕ Agregar PDFs", command=self.add_pdfs).pack(side="left", padx=4)
-        ttk.Button(ctrl, text="⬆️ Subir", command=self.move_up).pack(side="left", padx=4)
-        ttk.Button(ctrl, text="⬇️ Bajar", command=self.move_down).pack(side="left", padx=4)
-        ttk.Button(ctrl, text="❌ Quitar", command=self.remove_selected).pack(side="left", padx=4)
-        ttk.Button(ctrl, text="🧹 Limpiar", command=self.clear_list).pack(side="left", padx=4)
+        ttk.Button(ctrl, text="➕ Agregar PDFs", command=self.add_pdfs, style="Secondary.TButton").pack(side="left", padx=4)
+        ttk.Button(ctrl, text="⬆️ Subir", command=self.move_up, style="Secondary.TButton").pack(side="left", padx=4)
+        ttk.Button(ctrl, text="⬇️ Bajar", command=self.move_down, style="Secondary.TButton").pack(side="left", padx=4)
+        ttk.Button(ctrl, text="❌ Quitar", command=self.remove_selected, style="Danger.TButton").pack(side="left", padx=4)
+        ttk.Button(ctrl, text="🧹 Limpiar", command=self.clear_list, style="Danger.TButton").pack(side="left", padx=4)
 
         ttk.Label(
             in_box,
@@ -239,13 +262,13 @@ class PDFMergeTab(BaseTab):
         out_box.pack(fill="x", pady=8)
         self.output_var = tk.StringVar(value=str(self.get_output_subdir("pdf_unidos") / "merge.pdf"))
         ttk.Entry(out_box, textvariable=self.output_var).pack(fill="x", pady=4)
-        ttk.Button(out_box, text="📁 Elegir ruta", command=self.pick_output).pack(anchor="w", pady=4)
+        ttk.Button(out_box, text="📁 Elegir ruta", command=self.pick_output, style="Secondary.TButton").pack(anchor="w", pady=4)
 
         action = ttk.Frame(main)
         action.pack(fill="x", pady=8)
-        ttk.Button(action, text="🔗 Unir PDFs", command=self.merge).pack(side="left", padx=4)
-        ttk.Button(action, text="📂 Abrir output", command=lambda: self.open_output_dir(str(self.get_output_subdir("pdf_unidos")))).pack(side="left", padx=4)
-        ttk.Button(action, text="🗂️ Cambiar output", command=self.choose_output_base_dir).pack(side="left", padx=4)
+        ttk.Button(action, text="🔗 Unir PDFs", command=self.merge, style="Primary.TButton").pack(side="left", padx=4)
+        ttk.Button(action, text="📂 Abrir output", command=lambda: self.open_output_dir(str(self.get_output_subdir("pdf_unidos"))), style="Secondary.TButton").pack(side="left", padx=4)
+        ttk.Button(action, text="🗂️ Cambiar output", command=self.choose_output_base_dir, style="Secondary.TButton").pack(side="left", padx=4)
 
         self.build_status_bar()
 
@@ -348,7 +371,7 @@ class PDFToImageTab(BaseTab):
         self.file_label.pack(anchor="w", pady=4)
         self.info_label = ttk.Label(top, text="", foreground="#555", style="PdfImg.TLabel")
         self.info_label.pack(anchor="w", pady=2)
-        ttk.Button(top, text="📁 Seleccionar PDF", command=self.select_pdf).pack(anchor="w", pady=6)
+        ttk.Button(top, text="📁 Seleccionar PDF", command=self.select_pdf, style="Secondary.TButton").pack(anchor="w", pady=6)
 
         cfg = ttk.LabelFrame(main, text="⚙️ Opciones", padding=12, style="PdfImg.TLabelframe")
         cfg.pack(fill="x", pady=8)
@@ -385,9 +408,9 @@ class PDFToImageTab(BaseTab):
 
         action = ttk.Frame(main)
         action.pack(fill="x", pady=8)
-        ttk.Button(action, text="🖼️ Convertir a JPG", command=self.convert).pack(side="left", padx=4)
-        ttk.Button(action, text="📂 Abrir output", command=lambda: self.open_output_dir(str(self.get_output_subdir("imagenes")))).pack(side="left", padx=4)
-        ttk.Button(action, text="🗂️ Cambiar output", command=self.choose_output_base_dir).pack(side="left", padx=4)
+        ttk.Button(action, text="🖼️ Convertir a JPG", command=self.convert, style="Primary.TButton").pack(side="left", padx=4)
+        ttk.Button(action, text="📂 Abrir output", command=lambda: self.open_output_dir(str(self.get_output_subdir("imagenes"))), style="Secondary.TButton").pack(side="left", padx=4)
+        ttk.Button(action, text="🗂️ Cambiar output", command=self.choose_output_base_dir, style="Secondary.TButton").pack(side="left", padx=4)
 
         progress_box = ttk.LabelFrame(main, text="📊 Progreso", padding=12, style="PdfImg.TLabelframe")
         progress_box.pack(fill="x", pady=8)
@@ -480,9 +503,9 @@ class ImageToPDFTab(BaseTab):
 
         ctrl = ttk.Frame(in_box)
         ctrl.pack(fill="x", pady=4)
-        ttk.Button(ctrl, text="➕ Agregar imagenes", command=self.add_images).pack(side="left", padx=4)
-        ttk.Button(ctrl, text="📂 Agregar carpeta", command=self.add_folder).pack(side="left", padx=4)
-        ttk.Button(ctrl, text="🧹 Limpiar", command=self.clear_images).pack(side="left", padx=4)
+        ttk.Button(ctrl, text="➕ Agregar imagenes", command=self.add_images, style="Secondary.TButton").pack(side="left", padx=4)
+        ttk.Button(ctrl, text="📂 Agregar carpeta", command=self.add_folder, style="Secondary.TButton").pack(side="left", padx=4)
+        ttk.Button(ctrl, text="🧹 Limpiar", command=self.clear_images, style="Danger.TButton").pack(side="left", padx=4)
 
         self.drop_hint = ttk.Label(
             in_box,
@@ -519,9 +542,9 @@ class ImageToPDFTab(BaseTab):
 
         action = ttk.Frame(main)
         action.pack(fill="x", pady=8)
-        ttk.Button(action, text="🚀 Convertir", command=self.process_conversion).pack(side="left", padx=4)
-        ttk.Button(action, text="📂 Abrir output", command=lambda: self.open_output_dir(str(self.get_output_subdir("img2pdf")))).pack(side="left", padx=4)
-        ttk.Button(action, text="🗂️ Cambiar output", command=self.choose_output_base_dir).pack(side="left", padx=4)
+        ttk.Button(action, text="🚀 Convertir", command=self.process_conversion, style="Primary.TButton").pack(side="left", padx=4)
+        ttk.Button(action, text="📂 Abrir output", command=lambda: self.open_output_dir(str(self.get_output_subdir("img2pdf"))), style="Secondary.TButton").pack(side="left", padx=4)
+        ttk.Button(action, text="🗂️ Cambiar output", command=self.choose_output_base_dir, style="Secondary.TButton").pack(side="left", padx=4)
 
         progress_box = ttk.LabelFrame(main, text="📊 Progreso", padding=12, style="ImgPdf.TLabelframe")
         progress_box.pack(fill="x", pady=8)
@@ -687,9 +710,9 @@ class ImageFormatConvertTab(BaseTab):
 
         ctrl = ttk.Frame(in_box)
         ctrl.pack(fill="x", pady=4)
-        ttk.Button(ctrl, text="➕ Agregar imagenes", command=self.add_images).pack(side="left", padx=4)
-        ttk.Button(ctrl, text="📂 Agregar carpeta", command=self.add_folder).pack(side="left", padx=4)
-        ttk.Button(ctrl, text="🧹 Limpiar", command=self.clear_images).pack(side="left", padx=4)
+        ttk.Button(ctrl, text="➕ Agregar imagenes", command=self.add_images, style="Secondary.TButton").pack(side="left", padx=4)
+        ttk.Button(ctrl, text="📂 Agregar carpeta", command=self.add_folder, style="Secondary.TButton").pack(side="left", padx=4)
+        ttk.Button(ctrl, text="🧹 Limpiar", command=self.clear_images, style="Danger.TButton").pack(side="left", padx=4)
 
         self.drop_hint = ttk.Label(
             in_box,
@@ -721,9 +744,9 @@ class ImageFormatConvertTab(BaseTab):
 
         action = ttk.Frame(main)
         action.pack(fill="x", pady=8)
-        ttk.Button(action, text="🎨 Convertir imagenes", command=self.convert).pack(side="left", padx=4)
-        ttk.Button(action, text="📂 Abrir output", command=lambda: self.open_output_dir(str(self.get_output_subdir("imgfmt")))).pack(side="left", padx=4)
-        ttk.Button(action, text="🗂️ Cambiar output", command=self.choose_output_base_dir).pack(side="left", padx=4)
+        ttk.Button(action, text="🎨 Convertir imagenes", command=self.convert, style="Primary.TButton").pack(side="left", padx=4)
+        ttk.Button(action, text="📂 Abrir output", command=lambda: self.open_output_dir(str(self.get_output_subdir("imgfmt"))), style="Secondary.TButton").pack(side="left", padx=4)
+        ttk.Button(action, text="🗂️ Cambiar output", command=self.choose_output_base_dir, style="Secondary.TButton").pack(side="left", padx=4)
 
         progress_box = ttk.LabelFrame(main, text="📊 Progreso", padding=12, style="ImgFmt.TLabelframe")
         progress_box.pack(fill="x", pady=8)
@@ -858,9 +881,9 @@ class ScanTab(BaseTab):
 
         ctrl = ttk.Frame(in_box)
         ctrl.pack(fill="x", pady=4)
-        ttk.Button(ctrl, text="➕ Agregar imagenes", command=self.add_images).pack(side="left", padx=4)
-        ttk.Button(ctrl, text="📂 Agregar carpeta", command=self.add_folder).pack(side="left", padx=4)
-        ttk.Button(ctrl, text="🧹 Limpiar", command=self.clear_images).pack(side="left", padx=4)
+        ttk.Button(ctrl, text="➕ Agregar imagenes", command=self.add_images, style="Secondary.TButton").pack(side="left", padx=4)
+        ttk.Button(ctrl, text="📂 Agregar carpeta", command=self.add_folder, style="Secondary.TButton").pack(side="left", padx=4)
+        ttk.Button(ctrl, text="🧹 Limpiar", command=self.clear_images, style="Danger.TButton").pack(side="left", padx=4)
 
         self.listbox = tk.Listbox(in_box, height=8)
         self.listbox.pack(fill="both", expand=True, padx=4, pady=4)
@@ -894,9 +917,9 @@ class ScanTab(BaseTab):
 
         action = ttk.Frame(main)
         action.pack(fill="x", pady=8)
-        ttk.Button(action, text="🧾 Escanear", command=self.scan).pack(side="left", padx=4)
-        ttk.Button(action, text="📂 Abrir output", command=lambda: self.open_output_dir(str(self.get_output_subdir("scanner")))).pack(side="left", padx=4)
-        ttk.Button(action, text="🗂️ Cambiar output", command=self.choose_output_base_dir).pack(side="left", padx=4)
+        ttk.Button(action, text="🧾 Escanear", command=self.scan, style="Primary.TButton").pack(side="left", padx=4)
+        ttk.Button(action, text="📂 Abrir output", command=lambda: self.open_output_dir(str(self.get_output_subdir("scanner"))), style="Secondary.TButton").pack(side="left", padx=4)
+        ttk.Button(action, text="🗂️ Cambiar output", command=self.choose_output_base_dir, style="Secondary.TButton").pack(side="left", padx=4)
 
         progress_box = ttk.LabelFrame(main, text="📊 Progreso", padding=12, style="Scan.TLabelframe")
         progress_box.pack(fill="x", pady=8)
@@ -1066,8 +1089,8 @@ class PDFExtractToolApp(tk.Tk):
         footer = ttk.Frame(self)
         footer.grid(row=2, column=0, sticky="ew", padx=10, pady=(0, 8))
         ttk.Label(footer, text="v1.2", foreground="gray").pack(side="left")
-        ttk.Button(footer, text="🚪 Salir", command=self.destroy).pack(side="right", padx=(0, 6))
-        ttk.Button(footer, text="ℹ️ Acerca de", command=self.show_about).pack(side="right")
+        ttk.Button(footer, text="🚪 Salir", command=self.destroy, style="Danger.TButton").pack(side="right", padx=(0, 6))
+        ttk.Button(footer, text="ℹ️ Acerca de", command=self.show_about, style="Secondary.TButton").pack(side="right")
 
     def show_about(self):
         messagebox.showinfo(
